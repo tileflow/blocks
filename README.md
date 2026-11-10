@@ -54,15 +54,15 @@ pnpm test:install           # installs store-locator into a new shadcn app and o
 
 `pnpm test:install` needs Chromium for Playwright (`pnpm exec playwright install chromium`).
 
+The files under `components/`, `lib/` and `app/` are the registry sources: `registry.json` points
+at them, and the preview app renders them exactly as they are installed. Set `REGISTRY_URL` when
+building for another origin, for example `REGISTRY_URL=http://localhost:8787/r`.
+
 ## Preview
 
 `pnpm preview:build` exports the gallery as a static site to `out/`, with the map prepared at build
 time, and `pnpm preview:serve` serves it locally. The Preview workflow deploys it to
 `blocks-preview.tileflow.dev`, which is limited to the Tileflow team.
-
-The files under `components/`, `lib/` and `app/` are the registry sources: `registry.json` points
-at them, and the preview app renders them exactly as they are installed. Set `REGISTRY_URL` when
-building for another origin, for example `REGISTRY_URL=http://localhost:8787/r`.
 
 ## License
 
