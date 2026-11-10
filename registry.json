@@ -1,0 +1,99 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "tileflow",
+  "homepage": "https://tileflow.dev/blocks",
+  "items": [
+    {
+      "name": "map",
+      "type": "registry:ui",
+      "title": "Map",
+      "description": "Interactive vector map for React and Next.js that follows your shadcn theme: light and dark with your theme toggle, and markers, clusters, popups and attribution in your design tokens. Street map data included, no API key or account.",
+      "categories": ["map", "maps", "location"],
+      "dependencies": [
+        "@tileflow/core@0.1.0-alpha.48",
+        "@tileflow/interactions@0.1.0-alpha.8",
+        "@tileflow/maps@0.1.0-alpha.20",
+        "@tileflow/react@0.1.0-alpha.38",
+        "maplibre-gl@6.16.0"
+      ],
+      "devDependencies": ["@tileflow/next@0.1.0-alpha.25"],
+      "files": [
+        { "path": "components/ui/map.tsx", "type": "registry:ui" },
+        { "path": "lib/map-theme.ts", "type": "registry:lib" },
+        {
+          "path": "tileflow.config.ts",
+          "type": "registry:file",
+          "target": "~/tileflow.config.ts"
+        },
+        {
+          "path": "app/api/tileflow/[[...tileflow]]/route.ts",
+          "type": "registry:page",
+          "target": "app/api/tileflow/[[...tileflow]]/route.ts"
+        }
+      ],
+      "docs": "The map is defined in tileflow.config.ts and served by app/api/tileflow. Render <Map /> inside an element with a height. Next.js App Router only for now."
+    },
+    {
+      "name": "map-marker",
+      "type": "registry:ui",
+      "title": "Map marker",
+      "description": "Map pin and price tag markers in your primary colour, with an active state for the selected or hovered item.",
+      "categories": ["map", "maps"],
+      "registryDependencies": ["https://tileflow.dev/r/map.json"],
+      "files": [{ "path": "components/ui/map-marker.tsx", "type": "registry:ui" }]
+    },
+    {
+      "name": "map-popup",
+      "type": "registry:ui",
+      "title": "Map popup",
+      "description": "Header, title, description and footer parts for map popups, laid out like a shadcn Card on your popover surface.",
+      "categories": ["map", "maps"],
+      "registryDependencies": ["https://tileflow.dev/r/map.json"],
+      "files": [{ "path": "components/ui/map-popup.tsx", "type": "registry:ui" }]
+    },
+    {
+      "name": "map-controls",
+      "type": "registry:ui",
+      "title": "Map controls",
+      "description": "Show-my-location and full-screen buttons for the map, using your shadcn Button.",
+      "categories": ["map", "maps"],
+      "dependencies": ["lucide-react"],
+      "registryDependencies": ["button", "https://tileflow.dev/r/map.json"],
+      "files": [{ "path": "components/ui/map-controls.tsx", "type": "registry:ui" }]
+    },
+    {
+      "name": "store-locator",
+      "type": "registry:block",
+      "title": "Store locator",
+      "description": "Store locator page: a searchable store list synced with an interactive map, filters by store type, clustered markers, popups with directions, and nearest-first sorting from the visitor's location. Uses your shadcn theme in light and dark. Replace the sample stores with your own data. No API key.",
+      "categories": ["map", "maps", "location", "store-locator", "locator"],
+      "dependencies": ["lucide-react"],
+      "registryDependencies": [
+        "badge",
+        "button",
+        "input",
+        "https://tileflow.dev/r/map.json",
+        "https://tileflow.dev/r/map-controls.json",
+        "https://tileflow.dev/r/map-marker.json",
+        "https://tileflow.dev/r/map-popup.json"
+      ],
+      "files": [
+        {
+          "path": "app/store-locator/page.tsx",
+          "type": "registry:page",
+          "target": "app/store-locator/page.tsx"
+        },
+        {
+          "path": "components/store-locator/store-locator.tsx",
+          "type": "registry:component",
+          "target": "components/store-locator/store-locator.tsx"
+        },
+        {
+          "path": "components/store-locator/stores.ts",
+          "type": "registry:component",
+          "target": "components/store-locator/stores.ts"
+        }
+      ]
+    }
+  ]
+}

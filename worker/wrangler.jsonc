@@ -1,0 +1,16 @@
+{
+  // Serves the registry at tileflow.dev/r/*. This route is more specific than
+  // the site's tileflow.dev/*, so registry releases never wait for a site deploy.
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "tileflow-blocks-registry",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-06",
+  "workers_dev": false,
+  "routes": [{ "pattern": "tileflow.dev/r/*", "zone_name": "tileflow.dev" }],
+  "assets": {
+    "directory": "../dist",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "observability": { "enabled": true }
+}
