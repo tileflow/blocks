@@ -48,7 +48,11 @@ pnpm install
 pnpm dev                    # previews every item at http://localhost:3000
 pnpm registry:build         # writes dist/r/<item>.json and dist/r/v/<version>/<item>.json
 pnpm registry:dev           # serves dist/ like tileflow.dev/r/* does
+pnpm check                  # lint, types, registry validation, registry and preview builds
+pnpm test:install           # installs store-locator into a new shadcn app and opens it in Chromium
 ```
+
+`pnpm test:install` needs Chromium for Playwright (`pnpm exec playwright install chromium`).
 
 The files under `components/`, `lib/` and `app/` are the registry sources: `registry.json` points
 at them, and the preview app renders them exactly as they are installed. Set `REGISTRY_URL` when

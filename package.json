@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
+  "packageManager": "pnpm@11.21.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,8 +11,12 @@
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
+    "typecheck:worker": "tsc -p worker/tsconfig.json",
     "registry:build": "node scripts/build-registry.mjs",
-    "registry:dev": "wrangler dev --config worker/wrangler.jsonc --port 8787 --local"
+    "registry:dev": "wrangler dev --config worker/wrangler.jsonc --port 8787 --local",
+    "registry:validate": "shadcn registry validate",
+    "check": "pnpm lint && pnpm typecheck && pnpm typecheck:worker && pnpm registry:validate && pnpm registry:build && pnpm build",
+    "test:install": "node scripts/test-install.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -39,6 +44,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.4",
+    "playwright": "1.62.1",
     "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4",
