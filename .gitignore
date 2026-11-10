@@ -43,3 +43,6 @@ next-env.d.ts
 
 # wrangler local state
 .wrangler/
+
+# map artifacts written by the static preview build
+/public/api/

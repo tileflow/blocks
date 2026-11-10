@@ -1,0 +1,81 @@
+name: Preview
+
+# Deploys the gallery as a static site to blocks-preview.tileflow.dev, which Cloudflare Access
+# limits to the team. There is one preview: the latest deploy wins. Pull requests from forks never
+# deploy, because they get no secrets.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview
+  cancel-in-progress: false
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  WRANGLER_SEND_METRICS: "false"
+
+jobs:
+  deploy:
+    name: Deploy preview
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: preview
+    steps:
+      - name: Check credentials
+        id: credentials
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No Cloudflare token in this repository yet; the preview is not deployed."
+          fi
+
+      - name: Checkout
+        if: steps.credentials.outputs.ready == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        if: steps.credentials.outputs.ready == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Setup pnpm
+        if: steps.credentials.outputs.ready == 'true'
+        run: corepack enable
+
+      - name: Install exact dependencies
+        if: steps.credentials.outputs.ready == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the static gallery
+        if: steps.credentials.outputs.ready == 'true'
+        run: pnpm preview:build
+
+      - name: Deploy
+        if: steps.credentials.outputs.ready == 'true'
+        run: pnpm preview:deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Check that Access protects the preview
+        if: steps.credentials.outputs.ready == 'true'
+        run: |
+          location=$(curl -s -o /dev/null -w '%{redirect_url}' https://blocks-preview.tileflow.dev/)
+          case "$location" in
+            https://*.cloudflareaccess.com/*) echo "Access protects the preview." ;;
+            *) echo "::error::blocks-preview.tileflow.dev answered without the Access sign-in (redirect: '$location'). Protect it before sharing the link."; exit 1 ;;
+          esac
