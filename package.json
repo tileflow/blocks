@@ -11,7 +11,7 @@
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
-    "typecheck:worker": "tsc -p worker/tsconfig.json",
+    "typecheck:worker": "tsc -p worker/tsconfig.json && tsc -p preview/tsconfig.json",
     "registry:build": "node scripts/build-registry.mjs",
     "registry:dev": "wrangler dev --config worker/wrangler.jsonc --port 8787 --local",
     "registry:validate": "shadcn registry validate",

@@ -13,6 +13,14 @@
   --site-code: #0a0a0a;
   --site-code-fg: #fafafa;
   --site-code-rule: #333333;
+  /* tileflow.dev's code palette (apps/web/app/globals.css). */
+  --site-code-muted: #a3a3a3;
+  --site-code-comment: #90949c;
+  --site-code-function: #d9d2c3;
+  --site-code-keyword: #c9a7e8;
+  --site-code-number: #9eaee0;
+  --site-code-property: #d3b989;
+  --site-code-string: #a8c092;
 }
 
 .dark {

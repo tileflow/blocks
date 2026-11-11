@@ -58,10 +58,26 @@ The files under `components/`, `lib/` and `app/` are the registry sources: `regi
 at them, and the preview app renders them exactly as they are installed. Set `REGISTRY_URL` when
 building for another origin, for example `REGISTRY_URL=http://localhost:8787/r`.
 
+## For agents
+
+Every gallery page has a Markdown version with the install command, a usage example and the full
+source of the files it adds: append `.md` to the page URL, or ask for the page with
+`Accept: text/markdown`. `/llms.txt` lists every item, and `/llms-full.txt` holds every built item
+in one file. `gallery/markdown.ts` writes them from the same sources as the HTML pages.
+
+To check them against the [Agent-Friendly Documentation Spec](https://afdocs.dev/), serve the
+static preview and run `afdocs` in another terminal:
+
+```sh
+TILEFLOW_BLOCKS_ORIGIN=http://localhost:8790 pnpm preview:build && pnpm preview:serve
+npx afdocs@0.23.0 check http://localhost:8790/ --format scorecard
+```
+
 ## Preview
 
 `pnpm preview:build` exports the gallery as a static site to `out/`, with the map prepared at build
-time, and `pnpm preview:serve` serves it locally. The Preview workflow deploys it to
+time, and `pnpm preview:serve` serves it locally through `preview/worker.ts`, which adds the Markdown
+versions. The Preview workflow deploys it to
 `blocks-preview.tileflow.dev`, which is limited to the Tileflow team.
 
 ## License

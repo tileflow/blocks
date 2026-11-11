@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 
 import { catalog } from "@/gallery/catalog"
 import { ItemPage, itemTitle } from "@/gallery/item-page"
+import { itemMarkdownPath, siteOrigin } from "@/gallery/site"
 
 type Params = { params: Promise<{ name: string }> }
 
@@ -13,7 +14,10 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { name } = await params
-  return { title: `${itemTitle(name)} · Tileflow Blocks` }
+  return {
+    title: `${itemTitle(name)} · Tileflow Blocks`,
+    alternates: { types: { "text/markdown": `${siteOrigin}${itemMarkdownPath(name)}` } },
+  }
 }
 
 export default async function Page({ params }: Params) {

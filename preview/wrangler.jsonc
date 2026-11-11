@@ -1,4 +1,5 @@
-// Review preview of the gallery: the static export from `pnpm preview:build`, served only at
+// Review preview of the gallery: the static export from `pnpm preview:build`, served by worker.ts
+// (which adds the Markdown versions for agents) only at
 // blocks-preview.tileflow.dev, which Cloudflare Access limits to the team. No workers.dev or
 // preview URLs, so there is no unprotected address.
 {
@@ -8,8 +9,11 @@
   "workers_dev": false,
   "preview_urls": false,
   "routes": [{ "pattern": "blocks-preview.tileflow.dev/*", "zone_name": "tileflow.dev" }],
+  "main": "worker.ts",
   "assets": {
     "directory": "../out",
+    "binding": "ASSETS",
+    "run_worker_first": true,
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page"
   }
