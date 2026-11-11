@@ -1,0 +1,12 @@
+# @tileflow/elements is its own workspace until @tileflow/dom is on npm: it installs the SDK core
+# from a local pack (`pnpm sdk:pack` at the repository root), which CI does not have.
+packages: []
+
+overrides:
+  # @tileflow/dom builds on unreleased core and interactions changes: use the packs from the same
+  # SDK commit everywhere, also under @tileflow/maps and @tileflow/vite.
+  "@tileflow/core": file:../.sdk-packs/tileflow-core-0.0.0-development.tgz
+  "@tileflow/interactions": file:../.sdk-packs/tileflow-interactions-0.0.0-development.tgz
+
+allowBuilds:
+  esbuild: true

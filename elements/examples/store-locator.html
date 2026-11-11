@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Store locator</title>
+    <style>
+      /* The locator's layout, in the same tokens as the map: list beside the map, below it on phones. */
+      .store-locator {
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+        height: 36rem;
+        overflow: hidden;
+        border: 1px solid var(--border, #e5e5e5);
+        border-radius: 0.75rem;
+        background: var(--background, #fff);
+        color: var(--foreground, #0a0a0a);
+        font: 14px/1.4 var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+      }
+      @media (min-width: 768px) {
+        .store-locator {
+          grid-template-columns: 22rem minmax(0, 1fr);
+          grid-template-rows: none;
+        }
+        .store-locator aside {
+          order: -1;
+          border-top: 0;
+          border-right: 1px solid var(--border, #e5e5e5);
+        }
+      }
+      .store-locator aside {
+        display: flex;
+        min-height: 0;
+        flex-direction: column;
+        border-top: 1px solid var(--border, #e5e5e5);
+      }
+      .store-locator .filters {
+        display: grid;
+        gap: 0.75rem;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border, #e5e5e5);
+      }
+      .store-locator input {
+        height: 2.25rem;
+        padding: 0 0.75rem;
+        border: 1px solid var(--input, #e5e5e5);
+        border-radius: 0.5rem;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+      }
+      .store-locator .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+      }
+      .store-locator .chips button {
+        height: 1.5rem;
+        padding: 0 0.625rem;
+        border: 1px solid var(--border, #e5e5e5);
+        border-radius: 0.375rem;
+        background: transparent;
+        color: inherit;
+        font: 500 12px/1 inherit;
+        cursor: pointer;
+      }
+      .store-locator .chips [aria-pressed="true"] {
+        border-color: var(--primary, #171717);
+        background: var(--primary, #171717);
+        color: var(--primary-foreground, #fafafa);
+      }
+      .store-locator .muted {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted-foreground, #737373);
+      }
+      .store-locator ul {
+        min-height: 0;
+        flex: 1;
+        margin: 0;
+        padding: 0.5rem;
+        overflow-y: auto;
+        list-style: none;
+      }
+      .store-locator li button {
+        display: grid;
+        gap: 0.25rem;
+        width: 100%;
+        padding: 0.75rem;
+        border: 0;
+        border-radius: 0.5rem;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      .store-locator li button:hover,
+      .store-locator li button[aria-current="true"] {
+        background: var(--muted, #f5f5f5);
+      }
+      .store-locator .name {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+        font-weight: 500;
+      }
+      .store-locator .badge {
+        padding: 0.125rem 0.5rem;
+        border-radius: 0.375rem;
+        background: var(--secondary, #f5f5f5);
+        font-size: 12px;
+        font-weight: 500;
+      }
+    </style>
+    <script type="module">
+      import "@tileflow/elements"
+      import { storeCategories, stores } from "./stores.js"
+
+      const root = document.querySelector(".store-locator")
+      const map = root.querySelector("tileflow-map")
+      const list = root.querySelector("ul")
+      const search = root.querySelector("input")
+      const chips = root.querySelector(".chips")
+      const status = root.querySelector("[role=status]")
+      let category = null
+      let origin = null
+
+      const pin = `<tileflow-pin><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9M4 9v11h16V9M4 9h16M9 20v-6h6v6" /></svg></tileflow-pin>`
+      const escape = (text) => text.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c])
+      const fold = (text) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase()
+      const kilometres = ([lng1, lat1], [lng2, lat2]) => {
+        const rad = Math.PI / 180
+        const a = Math.sin(((lat2 - lat1) * rad) / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(((lng2 - lng1) * rad) / 2) ** 2
+        return 12_742 * Math.asin(Math.sqrt(a))
+      }
+
+      // One marker per store, with its popup. The map shows the ones left in the DOM.
+      function marker(store) {
+        const [lng, lat] = store.coordinates
+        const element = document.createElement("tileflow-marker")
+        element.id = store.id
+        element.setAttribute("lng", lng)
+        element.setAttribute("lat", lat)
+        element.setAttribute("label", `${store.name}, ${store.address}`)
+        element.innerHTML = `${pin}
+          <tileflow-popup>
+            <div class="tileflow-popup">
+              <div class="tileflow-popup-header">
+                <h3 class="tileflow-popup-title">${escape(store.name)}</h3>
+                <p class="tileflow-popup-description">${escape(store.address)}, ${escape(store.city)}</p>
+              </div>
+              <p class="muted">${escape(store.category)} · Open ${escape(store.hours)}</p>
+              <div class="tileflow-popup-footer">
+                <a href="https://www.openstreetmap.org/directions?to=${lat}%2C${lng}" target="_blank" rel="noreferrer">Directions</a>
+                <a href="tel:${store.phone.replaceAll(" ", "")}">Call</a>
+              </div>
+            </div>
+          </tileflow-popup>`
+        return element
+      }
+      const markers = new Map(stores.map((store) => [store.id, marker(store)]))
+
+      function render() {
+        const needle = fold(search.value.trim())
+        let visible = stores.filter(
+          (store) => (!category || store.category === category) && fold(`${store.name} ${store.address} ${store.city}`).includes(needle)
+        )
+        if (origin) visible = visible.sort((a, b) => kilometres(origin, a.coordinates) - kilometres(origin, b.coordinates))
+
+        const shown = new Set(visible.map((store) => store.id))
+        for (const [id, element] of markers) {
+          if (shown.has(id) && !element.isConnected) map.append(element)
+          else if (!shown.has(id) && element.isConnected) element.remove()
+        }
+        list.innerHTML = visible.length
+          ? visible
+              .map(
+                (store) => `<li><button type="button" data-store="${store.id}" aria-current="${markers.get(store.id).hasAttribute("open")}">
+                  <span class="name">${escape(store.name)} <span class="badge">${escape(store.category)}</span></span>
+                  <span class="muted">${escape(store.address)}, ${escape(store.city)}</span>
+                  <span class="muted">Open ${escape(store.hours)}${origin ? ` · ${kilometres(origin, store.coordinates).toFixed(1)} km` : ""}</span>
+                </button></li>`
+              )
+              .join("")
+          : `<li class="muted" style="padding: 2rem; text-align: center">No stores match your search.</li>`
+        status.textContent = `${visible.length} of ${stores.length} stores${origin ? " · nearest first" : ""}`
+
+        // Frame the visible stores whenever the filter changes.
+        void map.ready.then((instance) => {
+          if (!visible.length) return
+          const lngs = visible.map((store) => store.coordinates[0])
+          const lats = visible.map((store) => store.coordinates[1])
+          instance.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]], { padding: 64, maxZoom: 14, duration: 600 })
+        })
+      }
+
+      chips.innerHTML = ["All", ...storeCategories].map((name) => `<button type="button" aria-pressed="${name === "All"}">${name}</button>`).join("")
+      chips.addEventListener("click", (event) => {
+        const button = event.target.closest("button")
+        if (!button) return
+        category = button.textContent === "All" || button.textContent === category ? null : button.textContent
+        for (const chip of chips.children) chip.ariaPressed = String(chip.textContent === (category ?? "All"))
+        render()
+      })
+      search.addEventListener("input", render)
+
+      // Opening a store in the list opens its popup and flies to it; the map keeps open current.
+      list.addEventListener("click", (event) => {
+        const id = event.target.closest("[data-store]")?.dataset.store
+        if (!id) return
+        markers.get(id).setAttribute("open", "")
+        const store = stores.find((candidate) => candidate.id === id)
+        void map.ready.then((instance) => instance.flyTo({ center: store.coordinates, zoom: Math.max(instance.getZoom(), 14) }))
+      })
+      list.addEventListener("pointerover", (event) => {
+        const id = event.target.closest("[data-store]")?.dataset.store
+        for (const [key, element] of markers) element.toggleAttribute("active", key === id)
+      })
+      list.addEventListener("pointerleave", () => markers.forEach((element) => element.removeAttribute("active")))
+      for (const element of markers.values()) {
+        element.addEventListener("toggle", (event) => {
+          const item = list.querySelector(`[data-store="${element.id}"]`)
+          item?.setAttribute("aria-current", String(event.detail.open))
+          if (event.detail.open) item?.scrollIntoView({ block: "nearest", behavior: "smooth" })
+        })
+      }
+      map.querySelector("tileflow-map-controls").addEventListener("tileflow-locate", (event) => {
+        origin = event.detail
+        render()
+      })
+
+      render()
+    </script>
+  </head>
+  <body>
+    <div class="store-locator">
+      <tileflow-map variant="faded" cluster-max-zoom="12">
+        <tileflow-map-controls></tileflow-map-controls>
+      </tileflow-map>
+      <aside>
+        <div class="filters">
+          <input type="search" placeholder="Search by name, street or city" aria-label="Search stores" />
+          <div class="chips" role="group" aria-label="Store type"></div>
+          <p class="muted" role="status"></p>
+        </div>
+        <ul></ul>
+      </aside>
+    </div>
+  </body>
+</html>

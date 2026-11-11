@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Controls</title>
+    <script type="module">
+      import "@tileflow/elements"
+
+      document.querySelector("tileflow-map-controls").addEventListener("tileflow-locate", (event) => {
+        console.log("The map flew to", event.detail)
+      })
+    </script>
+  </head>
+  <body>
+    <div style="height: 24rem">
+      <!-- navigation adds the map's zoom and compass buttons. -->
+      <tileflow-map navigation>
+        <tileflow-map-controls></tileflow-map-controls>
+      </tileflow-map>
+    </div>
+  </body>
+</html>

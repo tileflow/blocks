@@ -1,0 +1,158 @@
+{
+  "$schema": "https://shadcn-svelte.com/schema/registry.json",
+  "name": "tileflow",
+  "homepage": "https://tileflow.dev/blocks",
+  "items": [
+    {
+      "name": "map",
+      "type": "registry:ui",
+      "title": "Map",
+      "description": "Interactive vector map for Svelte that follows your shadcn-svelte theme: light or dark with your theme toggle, and popups, markers, clusters and attribution in your design tokens. Street map data from Tileflow; no API key.",
+      "dependencies": [
+        "@tileflow/core@0.1.0-alpha.49",
+        "@tileflow/interactions@0.1.0-alpha.8",
+        "@tileflow/maps@0.1.0-alpha.20",
+        "@tileflow/svelte@0.1.0-alpha.37",
+        "maplibre-gl@6.16.0"
+      ],
+      "devDependencies": [
+        "@tileflow/vite@0.1.0-alpha.26"
+      ],
+      "files": [
+        {
+          "path": "src/lib/components/ui/map/map.svelte",
+          "type": "registry:ui"
+        },
+        {
+          "path": "src/lib/components/ui/map/index.ts",
+          "type": "registry:ui"
+        },
+        {
+          "path": "src/lib/map-theme.svelte.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "tileflow.config.ts",
+          "type": "registry:file",
+          "target": "~/tileflow.config.ts"
+        }
+      ],
+      "docs": "Add tileflow() from @tileflow/vite to the plugins in vite.config.ts, before sveltekit(), so the map is served at /tileflow/manifest.json. Then render <Map /> inside an element with a height. The map follows the dark class on <html>, which mode-watcher sets. SvelteKit 3: shadcn-svelte imports use $lib, so add alias: { $lib: \"src/lib\" } to the sveltekit() options.",
+      "registryDependencies": []
+    },
+    {
+      "name": "map-marker",
+      "type": "registry:ui",
+      "title": "Marker",
+      "description": "Map pin and price tag markers in your primary colour, with an active state for the selected or hovered item. Render them from the map's marker snippet.",
+      "registryDependencies": [
+        "https://tileflow.dev/r/svelte/map.json"
+      ],
+      "files": [
+        {
+          "path": "src/lib/components/ui/map-marker/map-pin.svelte",
+          "type": "registry:ui"
+        },
+        {
+          "path": "src/lib/components/ui/map-marker/map-price-tag.svelte",
+          "type": "registry:ui"
+        },
+        {
+          "path": "src/lib/components/ui/map-marker/index.ts",
+          "type": "registry:ui"
+        }
+      ],
+      "dependencies": []
+    },
+    {
+      "name": "map-popup",
+      "type": "registry:ui",
+      "title": "Popup",
+      "description": "Header, title, description and footer parts for map popups, laid out like a shadcn-svelte Card. Render them from the map's popup snippet.",
+      "registryDependencies": [
+        "https://tileflow.dev/r/svelte/map.json"
+      ],
+      "files": [
+        {
+          "path": "src/lib/components/ui/map-popup/map-popup.svelte",
+          "type": "registry:ui"
+        },
+        {
+          "path": "src/lib/components/ui/map-popup/map-popup-header.svelte",
+          "type": "registry:ui"
+        },
+        {
+          "path": "src/lib/components/ui/map-popup/map-popup-title.svelte",
+          "type": "registry:ui"
+        },
+        {
+          "path": "src/lib/components/ui/map-popup/map-popup-description.svelte",
+          "type": "registry:ui"
+        },
+        {
+          "path": "src/lib/components/ui/map-popup/map-popup-footer.svelte",
+          "type": "registry:ui"
+        },
+        {
+          "path": "src/lib/components/ui/map-popup/index.ts",
+          "type": "registry:ui"
+        }
+      ],
+      "dependencies": []
+    },
+    {
+      "name": "map-controls",
+      "type": "registry:ui",
+      "title": "Controls",
+      "description": "Show-my-location and full-screen buttons for the map, using your shadcn-svelte Button.",
+      "dependencies": [
+        "@lucide/svelte"
+      ],
+      "registryDependencies": [
+        "button",
+        "https://tileflow.dev/r/svelte/map.json"
+      ],
+      "files": [
+        {
+          "path": "src/lib/components/ui/map-controls/map-controls.svelte",
+          "type": "registry:ui"
+        },
+        {
+          "path": "src/lib/components/ui/map-controls/index.ts",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "store-locator",
+      "type": "registry:block",
+      "title": "Store locator",
+      "description": "Store locator: a searchable store list synced with an interactive map, filters by store type, clustered markers, popups with directions, and nearest-first sorting from the visitor's location. Uses your shadcn-svelte theme in light and dark. Replace the sample stores with your own data. No API key.",
+      "dependencies": [
+        "@lucide/svelte"
+      ],
+      "registryDependencies": [
+        "badge",
+        "button",
+        "input",
+        "https://tileflow.dev/r/svelte/map.json",
+        "https://tileflow.dev/r/svelte/map-controls.json",
+        "https://tileflow.dev/r/svelte/map-marker.json",
+        "https://tileflow.dev/r/svelte/map-popup.json"
+      ],
+      "files": [
+        {
+          "path": "src/lib/components/store-locator/store-locator.svelte",
+          "type": "registry:component",
+          "target": "~/src/lib/components/store-locator/store-locator.svelte"
+        },
+        {
+          "path": "src/lib/components/store-locator/stores.ts",
+          "type": "registry:component",
+          "target": "~/src/lib/components/store-locator/stores.ts"
+        }
+      ],
+      "docs": "Render <StoreLocator {stores} categories={storeCategories} /> in any page with a height, and replace the sample stores in $lib/components/store-locator/stores.ts with yours. The map needs its Vite setup: see the map item."
+    }
+  ]
+}

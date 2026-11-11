@@ -1,0 +1,11 @@
+packages:
+  - svelte
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+  workerd: true
+minimumReleaseAgeExclude:
+  - lucide-react@1.71.0
+  - '@tileflow/core@0.1.0-alpha.49'
+  - '@tileflow/svelte@0.1.0-alpha.37'

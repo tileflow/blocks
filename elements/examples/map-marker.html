@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Markers</title>
+    <script type="module">
+      import "@tileflow/elements"
+
+      // A price tag stays active after the pointer passes over it, like the last listing looked at.
+      // The map draws each marker's own nodes, so listeners on them keep working.
+      const markers = [...document.querySelectorAll("tileflow-marker:has(tileflow-price-tag)")]
+      for (const marker of markers) {
+        marker.querySelector("tileflow-price-tag").addEventListener("pointerenter", () => {
+          for (const other of markers) other.toggleAttribute("active", other === marker)
+        })
+      }
+    </script>
+  </head>
+  <body>
+    <div style="height: 24rem">
+      <tileflow-map center="-3.6998,40.4168" zoom="14">
+        <tileflow-marker lng="-3.7012" lat="40.4205" label="€420"><tileflow-price-tag>€420</tileflow-price-tag></tileflow-marker>
+        <tileflow-marker lng="-3.6935" lat="40.4152" label="€385" active><tileflow-price-tag>€385</tileflow-price-tag></tileflow-marker>
+        <tileflow-marker lng="-3.7105" lat="40.4128" label="€510"><tileflow-price-tag>€510</tileflow-price-tag></tileflow-marker>
+        <tileflow-marker lng="-3.7068" lat="40.4247" label="Café">
+          <tileflow-pin>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 8h12v5a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5zM17 9h1.5a2.5 2.5 0 0 1 0 5H17M8 2v3M12 2v3" /></svg>
+          </tileflow-pin>
+        </tileflow-marker>
+        <tileflow-marker lng="-3.6889" lat="40.4228" label="Stop 1"><tileflow-pin>1</tileflow-pin></tileflow-marker>
+        <tileflow-marker lng="-3.6962" lat="40.4093" label="Stop 2"><tileflow-pin>2</tileflow-pin></tileflow-marker>
+      </tileflow-map>
+    </div>
+  </body>
+</html>

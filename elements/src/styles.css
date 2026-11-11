@@ -1,0 +1,266 @@
+/*
+ * What the elements draw, in your design tokens. Each --tf-* token reads the shadcn variable of
+ * the same name when your page defines it (--background, --primary, --radius…) and falls back to a
+ * neutral value otherwise. Set any of those variables on tileflow-map, or on a parent, to theme it.
+ * Everything sits in the tileflow layer, so your own unlayered rules win.
+ */
+@layer tileflow {
+  tileflow-map {
+    --tf-background: var(--background, oklch(1 0 0));
+    --tf-foreground: var(--foreground, oklch(0.145 0 0));
+    --tf-popover: var(--popover, var(--tf-background));
+    --tf-popover-foreground: var(--popover-foreground, var(--tf-foreground));
+    --tf-primary: var(--primary, oklch(0.205 0 0));
+    --tf-primary-foreground: var(--primary-foreground, oklch(0.985 0 0));
+    --tf-muted: var(--muted, oklch(0.97 0 0));
+    --tf-muted-foreground: var(--muted-foreground, oklch(0.556 0 0));
+    --tf-accent: var(--accent, oklch(0.97 0 0));
+    --tf-border: var(--border, oklch(0.922 0 0));
+    --tf-ring: var(--ring, oklch(0.708 0 0));
+    --tf-radius: var(--radius, 0.625rem);
+    --tf-font: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+
+    position: relative;
+    isolation: isolate;
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 16rem;
+    overflow: hidden;
+    background: var(--tf-muted);
+    font-family: var(--tf-font);
+
+    /* Popups, tooltips, markers and clusters of the map read these. */
+    --tileflow-interaction-surface: var(--tf-popover);
+    --tileflow-interaction-foreground: var(--tf-popover-foreground);
+    --tileflow-interaction-border-color: var(--tf-border);
+    --tileflow-interaction-border-radius: var(--tf-radius);
+    --tileflow-interaction-marker-color: var(--tf-primary);
+    --tileflow-interaction-cluster-color: var(--tf-primary);
+    --tileflow-interaction-shadow: 0 4px 16px oklch(0 0 0 / 0.14);
+  }
+
+  /* Pages without shadcn tokens still get a dark map chrome in dark mode. */
+  tileflow-map[data-scheme="dark"] {
+    --tf-background: var(--background, oklch(0.145 0 0));
+    --tf-foreground: var(--foreground, oklch(0.985 0 0));
+    --tf-primary: var(--primary, oklch(0.922 0 0));
+    --tf-primary-foreground: var(--primary-foreground, oklch(0.205 0 0));
+    --tf-muted: var(--muted, oklch(0.269 0 0));
+    --tf-muted-foreground: var(--muted-foreground, oklch(0.708 0 0));
+    --tf-accent: var(--accent, oklch(0.269 0 0));
+    --tf-border: var(--border, oklch(1 0 0 / 10%));
+    --tf-ring: var(--ring, oklch(0.556 0 0));
+  }
+
+  tileflow-map > .tileflow-map-canvas {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* Markers and popups are data for the map; their content is drawn on it. */
+  tileflow-marker,
+  tileflow-popup {
+    display: none;
+  }
+
+  tileflow-map .tileflow-interaction-marker,
+  tileflow-map .tileflow-interaction-cluster {
+    --tileflow-interaction-foreground: var(--tf-primary-foreground);
+    --tileflow-interaction-border-color: var(--tf-background);
+    --tileflow-interaction-border-radius: 9999px;
+  }
+  tileflow-map .tileflow-interaction-cluster {
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  tileflow-map .tileflow-interaction-cluster:focus-visible,
+  tileflow-map .tileflow-interaction-marker:focus-visible {
+    outline: 2px solid var(--tf-ring);
+  }
+
+  /* Popup content brings its own surface, padding and shape. */
+  tileflow-map .maplibregl-popup-content {
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+  }
+  tileflow-map .maplibregl-popup-tip {
+    display: none;
+  }
+  tileflow-map .tileflow-interaction-popup {
+    padding: 0;
+  }
+  tileflow-map .tileflow-interaction-tooltip {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  /* The popup's close button: it carries the label and takes focus on open. */
+  tileflow-map .tileflow-interaction-popup {
+    --tileflow-interaction-popup-close-color: var(--tf-muted-foreground);
+  }
+  tileflow-map .tileflow-interaction-popup-close:hover {
+    --tileflow-interaction-popup-close-color: var(--tf-foreground);
+  }
+  tileflow-map .tileflow-interaction-popup-close:focus-visible {
+    outline: 2px solid var(--tf-ring);
+  }
+
+  /* Zoom and compass buttons. */
+  tileflow-map .maplibregl-ctrl-group {
+    overflow: hidden;
+    border: 1px solid var(--tf-border);
+    border-radius: calc(var(--tf-radius) - 2px);
+    background: var(--tf-background);
+    box-shadow: 0 1px 2px oklch(0 0 0 / 0.05);
+  }
+  tileflow-map .maplibregl-ctrl-group button + button {
+    border-color: var(--tf-border);
+  }
+  tileflow-map .maplibregl-ctrl-group button:hover {
+    background: var(--tf-accent);
+  }
+  tileflow-map[data-scheme="dark"] .maplibregl-ctrl-group .maplibregl-ctrl-icon,
+  tileflow-map[data-scheme="dark"] .maplibregl-ctrl-attrib-button {
+    filter: invert(1);
+  }
+
+  /* Attribution is required: restyle it, never hide it. */
+  tileflow-map .maplibregl-ctrl-attrib {
+    border-radius: calc(var(--tf-radius) - 2px);
+    background: color-mix(in oklab, var(--tf-background) 80%, transparent);
+    font-size: 11px;
+    color: var(--tf-muted-foreground);
+    backdrop-filter: blur(8px);
+  }
+  tileflow-map .maplibregl-ctrl-attrib a {
+    color: var(--tf-muted-foreground);
+  }
+
+  /* <tileflow-pin>: a round pin in your primary colour. */
+  tileflow-pin {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 2px solid var(--tf-background);
+    border-radius: 9999px;
+    background: var(--tf-primary);
+    color: var(--tf-primary-foreground);
+    font-size: 0.75rem;
+    font-weight: 600;
+    box-shadow: 0 4px 6px -1px oklch(0 0 0 / 0.1), 0 2px 4px -2px oklch(0 0 0 / 0.1);
+    transition: scale 150ms;
+  }
+  tileflow-pin svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  /* <tileflow-price-tag>: a short label such as a price. */
+  tileflow-price-tag {
+    display: inline-flex;
+    align-items: center;
+    height: 1.5rem;
+    padding: 0 0.5rem;
+    border: 1px solid var(--tf-border);
+    border-radius: 9999px;
+    background: var(--tf-background);
+    color: var(--tf-foreground);
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    box-shadow: 0 1px 2px oklch(0 0 0 / 0.05);
+    transition: background-color 150ms, color 150ms, border-color 150ms;
+  }
+
+  /* A marker is active while hovered, focused or selected, or when it has the active attribute. */
+  tileflow-map [data-active] tileflow-pin {
+    scale: 1.25;
+    box-shadow: 0 0 0 1px var(--tf-background), 0 0 0 3px var(--tf-ring);
+  }
+  tileflow-map [data-active] tileflow-price-tag {
+    border-color: var(--tf-primary);
+    background: var(--tf-primary);
+    color: var(--tf-primary-foreground);
+  }
+
+  /* Popup content: the parts lay out what goes inside, like a card. */
+  tileflow-map .tileflow-popup {
+    position: relative;
+    display: grid;
+    gap: 0.5rem;
+    width: 16rem;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+  tileflow-map .tileflow-popup-header {
+    display: grid;
+    gap: 0.125rem;
+    padding-right: 1.5rem;
+  }
+  tileflow-map .tileflow-popup-title {
+    margin: 0;
+    font-size: inherit;
+    font-weight: 500;
+    line-height: 1.375;
+  }
+  tileflow-map .tileflow-popup-description {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--tf-muted-foreground);
+  }
+  tileflow-map .tileflow-popup-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 0.25rem;
+  }
+
+  /* <tileflow-map-controls>: locate and full screen, over the bottom right of the map. */
+  tileflow-map-controls {
+    position: absolute;
+    right: 0.625rem;
+    bottom: 2.5rem;
+    z-index: 10;
+    display: grid;
+    gap: 0.375rem;
+  }
+  tileflow-map-controls button {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid var(--tf-border);
+    border-radius: calc(var(--tf-radius) - 2px);
+    background: var(--tf-background);
+    color: var(--tf-foreground);
+    box-shadow: 0 1px 2px oklch(0 0 0 / 0.05);
+    cursor: pointer;
+  }
+  tileflow-map-controls button:hover:not(:disabled) {
+    background: var(--tf-accent);
+  }
+  tileflow-map-controls button:focus-visible {
+    outline: 2px solid var(--tf-ring);
+    outline-offset: 2px;
+  }
+  tileflow-map-controls button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  tileflow-map-controls svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  tileflow-map-controls [aria-busy="true"] svg {
+    animation: tileflow-pulse 1s ease-in-out infinite;
+  }
+  @keyframes tileflow-pulse {
+    50% {
+      opacity: 0.4;
+    }
+  }
+}
