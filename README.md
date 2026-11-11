@@ -55,9 +55,34 @@ Install a single component with `npx shadcn@latest add https://tileflow.dev/r/re
 | `map-controls`  | component | Show-my-location and full-screen buttons                              |
 | `store-locator` | block     | Searchable store list synced with the map, filters and nearest-first  |
 
+## Install in Svelte
+
+In a SvelteKit project with shadcn-svelte:
+
+```sh
+npx shadcn-svelte@latest add https://tileflow.dev/r/svelte/store-locator.json
+```
+
+Then add the Tileflow plugin to `vite.config.ts`, before `sveltekit()`, so the map is served at
+`/tileflow/manifest.json`:
+
+```ts
+import { tileflow } from "@tileflow/vite"
+
+export default defineConfig({ plugins: [tileflow(), tailwindcss(), sveltekit()] })
+```
+
+The map follows the `dark` class that mode-watcher sets on `<html>`. With SvelteKit 3,
+shadcn-svelte's `$lib` imports need `alias: { $lib: "src/lib" }` in the `sveltekit()` options.
+
+The Svelte items are `map`, `map-marker`, `map-popup`, `map-controls` and `store-locator`, as in
+React. Their sources live in `svelte/`, a SvelteKit app that renders them.
+
 ## Requirements
 
-- React 18 or 19, Tailwind CSS 4 and shadcn/ui, with Next.js 15 or 16 (App Router) or Vite 5 to 8.
+- React: React 18 or 19, Tailwind CSS 4 and shadcn/ui, with Next.js 15 or 16 (App Router) or Vite 5
+  to 8.
+- Svelte: Svelte 5, SvelteKit 2 or 3, Tailwind CSS 4 and shadcn-svelte.
 - MapLibre's worker comes from your bundle; nothing to copy.
 - Keep the map attribution visible.
 
@@ -69,7 +94,7 @@ pnpm dev                    # the gallery: every catalog item at http://localhos
 pnpm registry:build         # writes dist/r/<item>.json and dist/r/v/<version>/<item>.json
 pnpm registry:dev           # serves dist/ like tileflow.dev/r/* does
 pnpm check                  # lint, types, registry validation, registry and preview builds
-pnpm test:install           # installs store-locator into new Next.js and Vite apps and opens each in Chromium
+pnpm test:install           # installs store-locator into new Next.js, Vite and SvelteKit apps and opens each in Chromium
 ```
 
 `pnpm test:install` needs Chromium for Playwright (`pnpm exec playwright install chromium`).
@@ -77,7 +102,7 @@ pnpm test:install           # installs store-locator into new Next.js and Vite a
 The files under `components/`, `lib/` and `app/` are the registry sources: `registry.json` points
 at them, and the preview app renders them exactly as they are installed. Set `REGISTRY_URL` when
 building for another origin, for example `REGISTRY_URL=http://localhost:8787/r`. Each stack is
-served under its own path: `/r/react/<item>.json`.
+served under its own path: `/r/react/<item>.json` and `/r/svelte/<item>.json`.
 
 ## For agents
 

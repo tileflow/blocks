@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Wrangler's local build output.
     "**/.wrangler/**",
+    // The Svelte registry has its own checks (pnpm typecheck:svelte).
+    "svelte/**",
   ]),
 ]);
 

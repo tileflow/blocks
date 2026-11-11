@@ -1,10 +1,10 @@
 // Installs the registry into new apps and checks that the store locator works in each.
 //
 //   node scripts/test-install.mjs            every environment
-//   node scripts/test-install.mjs vite       one: next, vite
+//   node scripts/test-install.mjs vite       one: next, vite, sveltekit
 //
 // Builds the registry for a local origin and serves it with the Worker (`wrangler dev`). For each
-// environment it creates an app with `shadcn init`, adds `store-locator` from that origin, follows
+// environment it creates an app with its shadcn CLI, adds `store-locator` from that origin, follows
 // the setup the map item describes, builds and starts the app, and opens the store locator in
 // Chromium: the map must reach its idle state with the sample stores on it, and switch to a dark
 // map theme when the app switches to dark mode.
@@ -115,9 +115,10 @@ async function edit(file, change) {
 // Each environment: how shadcn creates it, the setup the map item asks for, and how it serves.
 const environments = {
   next: {
-    template: "next",
+    create: (workspace, name) => shadcnInit(workspace, name, "next"),
+    add: (app, item) => shadcnAdd(app, "react", item),
     async setup(app) {
-      await add(app, "map-next")
+      await shadcnAdd(app, "react", "map-next")
       await edit(path.join(app, "next.config.ts"), (text) =>
         text
           .replace(/^/, 'import { withTileflow } from "@tileflow/next"\n')
@@ -131,7 +132,8 @@ const environments = {
     page: "/store-locator",
   },
   vite: {
-    template: "vite",
+    create: (workspace, name) => shadcnInit(workspace, name, "vite"),
+    add: (app, item) => shadcnAdd(app, "react", item),
     async setup(app) {
       await run("pnpm", ["add", "-D", "@tileflow/vite@0.1.0-alpha.26"], { cwd: app })
       await edit(path.join(app, "vite.config.ts"), (text) =>
@@ -145,16 +147,62 @@ const environments = {
     start: (port) => ["pnpm", ["exec", "vite", "preview", "--port", String(port), "--strictPort"]],
     page: "/",
   },
+  sveltekit: {
+    // `shadcn-svelte init` only asks its questions interactively, so the app gets the files it
+    // writes from this repository's own Svelte app, which it set up.
+    async create(workspace, name) {
+      await run("npx", ["-y", "sv@1.3.0", "create", name, "--template", "minimal", "--types", "ts", "--add", "tailwindcss=plugins:none", "--install", "pnpm", "--no-dir-check"], { cwd: workspace })
+      const app = path.join(workspace, name)
+      const own = path.resolve("svelte")
+      for (const file of ["components.json", "src/lib/utils.ts", "src/routes/layout.css"]) {
+        await writeFile(path.join(app, file), await readFile(path.join(own, file)))
+      }
+      await run("pnpm", ["add", "-D", "shadcn-svelte@1.8.0", "cn", "tailwind-variants", "tw-animate-css", "@fontsource-variable/geist", "@lucide/svelte"], { cwd: app })
+      // shadcn-svelte writes $lib imports, which SvelteKit 3 no longer declares by itself.
+      await edit(path.join(app, "vite.config.ts"), (text) => text.replace(/adapter:\s*adapter\(\),?/, 'adapter: adapter(),\n      alias: { $lib: "src/lib" },'))
+      await edit(path.join(app, "tsconfig.json"), (text) =>
+        text.replace(/"compilerOptions":\s*\{/, '"compilerOptions": {\n\t\t"paths": { "$lib": ["./src/lib"], "$lib/*": ["./src/lib/*"] },')
+      )
+      return app
+    },
+    add: (app, item) => run("pnpm", ["exec", "shadcn-svelte", "add", `${registryUrl}/svelte/${item}.json`, "--yes"], { cwd: app }),
+    async setup(app) {
+      await edit(path.join(app, "vite.config.ts"), (text) =>
+        text
+          .replace(/^/, 'import { tileflow } from "@tileflow/vite"\n')
+          .replace(/plugins:\s*\[/, "plugins: [tileflow(), ")
+      )
+      await writeFile(
+        path.join(app, "src/routes/+page.svelte"),
+        `<script lang="ts">
+  import StoreLocator from "$lib/components/store-locator/store-locator.svelte"
+  import { storeCategories, stores } from "$lib/components/store-locator/stores"
+</script>
+
+<main style="height: 100svh; padding: 16px">
+  <StoreLocator {stores} categories={storeCategories} />
+</main>
+`
+      )
+    },
+    build: ["pnpm", ["exec", "vite", "build"]],
+    start: (port) => ["pnpm", ["exec", "vite", "preview", "--port", String(port), "--strictPort"]],
+    page: "/",
+  },
 }
 
-async function add(app, item) {
-  await run("pnpm", ["exec", "shadcn", "add", `${registryUrl}/react/${item}.json`, "--yes", "--cwd", app])
+async function shadcnInit(workspace, name, template) {
+  await run("pnpm", ["exec", "shadcn", "init", "--template", template, "--defaults", "--name", name, "--no-monorepo", "--cwd", workspace])
+  return path.join(workspace, name)
+}
+
+async function shadcnAdd(app, stack, item) {
+  await run("pnpm", ["exec", "shadcn", "add", `${registryUrl}/${stack}/${item}.json`, "--yes", "--cwd", app])
 }
 
 async function check(name, environment, workspace) {
-  const app = path.join(workspace, name)
-  await run("pnpm", ["exec", "shadcn", "init", "--template", environment.template, "--defaults", "--name", name, "--no-monorepo", "--cwd", workspace])
-  await add(app, "store-locator")
+  const app = await environment.create(workspace, name)
+  await environment.add(app, "store-locator")
   await environment.setup(app)
   const [buildCommand, buildArgs] = environment.build
   await run(buildCommand, buildArgs, { cwd: app })

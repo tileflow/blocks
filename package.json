@@ -15,11 +15,12 @@
     "registry:build": "node scripts/build-registry.mjs",
     "registry:dev": "wrangler dev --config worker/wrangler.jsonc --port 8787 --local",
     "registry:validate": "shadcn registry validate",
-    "check": "pnpm lint && pnpm typecheck && pnpm typecheck:worker && pnpm registry:validate && pnpm registry:build && pnpm build",
+    "check": "pnpm lint && pnpm typecheck && pnpm typecheck:worker && pnpm typecheck:svelte && pnpm registry:validate && pnpm registry:build && pnpm build",
     "test:install": "node scripts/test-install.mjs",
     "preview:build": "TILEFLOW_STATIC_PREVIEW=1 next build",
     "preview:serve": "wrangler dev --config preview/wrangler.jsonc --local --port 8790",
-    "preview:deploy": "wrangler deploy --config preview/wrangler.jsonc"
+    "preview:deploy": "wrangler deploy --config preview/wrangler.jsonc",
+    "typecheck:svelte": "pnpm --dir svelte check"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
