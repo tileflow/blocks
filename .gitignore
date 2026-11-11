@@ -54,3 +54,5 @@ next-env.d.ts
 /elements/node_modules/
 /elements/dist/
 /elements/dist-demo/
+# Its lockfile pins the hashes of local packs, so it only means something on one machine.
+/elements/pnpm-lock.yaml
