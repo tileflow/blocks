@@ -106,10 +106,12 @@ served under its own path: `/r/react/<item>.json` and `/r/svelte/<item>.json`.
 
 ## For agents
 
-Every gallery page has a Markdown version with the install command, a usage example and the full
-source of the files it adds: append `.md` to the page URL, or ask for the page with
-`Accept: text/markdown`. `/llms.txt` lists every item, and `/llms-full.txt` holds every built item
-in one file. `gallery/markdown.ts` writes them from the same sources as the HTML pages.
+Each built item has a page per stack: `/items/<name>` for React and `/items/<name>/<stack>` for the
+others (`gallery/stacks.ts`). Every stack shows the same React preview, with that stack's install
+command, map setup, usage example and source. Every page has a Markdown version: append `.md` to
+the page URL, or ask for the page with `Accept: text/markdown`. `/llms.txt` lists every item by
+stack, and `/llms-full.txt` holds every built item in every stack in one file.
+`gallery/markdown.ts` writes them from the same sources as the HTML pages.
 
 To check them against the [Agent-Friendly Documentation Spec](https://afdocs.dev/), serve the
 static preview and run `afdocs` in another terminal:

@@ -1,17 +1,20 @@
+import type { StackId } from "@/gallery/stacks"
+
 // Where the gallery and the registry are served. Gallery only; nothing here is installed.
 
 /** The gallery origin used in absolute links, for agents and Markdown readers. */
 export const siteOrigin = (process.env.TILEFLOW_BLOCKS_ORIGIN ?? "https://blocks-preview.tileflow.dev").replace(/\/$/, "")
 
-/** Where `npx shadcn add` fetches the items from. */
-export const registryOrigin = "https://tileflow.dev/r/react"
+/** Where the shadcn CLIs fetch the items from: <registryBase>/<stack>/<item>.json. */
+export const registryBase = "https://tileflow.dev/r"
 
-/** False until the registry is served at registryOrigin. */
+/** False until the registry is served at registryBase. */
 export const registryLive = false
 
-export const itemPath = (name: string) => `/items/${name}`
-export const itemMarkdownPath = (name: string) => `/items/${name}.md`
-export const installCommand = (name: string) => `npx shadcn@latest add ${registryOrigin}/${name}.json`
+export const registryItemUrl = (stack: StackId, name: string) => `${registryBase}/${stack}/${name}.json`
 
-export const requirements =
-  "Next.js 15 or 16 with the App Router, React 18 or 19, Tailwind CSS 4 and shadcn/ui. Street map data comes from Tileflow; no account or API key is needed for the map."
+/** The page of an item: /items/<name> in the default stack, /items/<name>/<stack> in the others. */
+export const itemPath = (name: string, stack?: StackId) =>
+  stack === undefined || stack === "react" ? `/items/${name}` : `/items/${name}/${stack}`
+
+export const itemMarkdownPath = (name: string, stack?: StackId) => `${itemPath(name, stack)}.md`

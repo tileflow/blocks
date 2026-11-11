@@ -7,7 +7,8 @@ import { withTileflow } from "@tileflow/next"
 // app/) is left out because the export already holds the prepared map.
 const staticPreview = process.env.TILEFLOW_STATIC_PREVIEW === "1"
 
-// Markdown for agents: /items/<name>.md, or an item page asked for with `Accept: text/markdown`.
+// Markdown for agents: /items/<name>.md and /items/<name>/<stack>.md, or an item page asked for
+// with `Accept: text/markdown`.
 // preview/worker.ts does the same for the static preview.
 const wantsMarkdown = [{ type: "header" as const, key: "accept", value: ".*text/markdown.*" }]
 
@@ -17,8 +18,10 @@ const nextConfig: NextConfig = staticPreview
       async rewrites() {
         return {
           beforeFiles: [
-            { source: "/items/:file(.+\\.md)", destination: "/md/items/:file" },
+            { source: "/items/:name/:stack([a-z]+)\\.md", destination: "/md/stacks/:stack/:name.md" },
+            { source: "/items/:file([a-z0-9-]+\\.md)", destination: "/md/items/:file" },
             { source: "/", has: wantsMarkdown, destination: "/index.md" },
+            { source: "/items/:name/:stack", has: wantsMarkdown, destination: "/md/stacks/:stack/:name.md" },
             { source: "/items/:name", has: wantsMarkdown, destination: "/md/items/:name.md" },
           ],
           afterFiles: [],

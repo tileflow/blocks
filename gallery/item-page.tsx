@@ -6,10 +6,11 @@ import { cn } from "@/lib/utils"
 import { catalog, findCatalogItem, type CatalogItem } from "@/gallery/catalog"
 import { CodeBlock } from "@/gallery/code-block"
 import { CopyButton, FileTabs, SchemeToggle } from "@/gallery/controls"
-import { addsSentence, preRelease, statusSentence } from "@/gallery/markdown"
+import { addsSentence, installCommand, preRelease, setupSentence, stacksSentence, statusSentence, usageSentence } from "@/gallery/markdown"
 import { PreviewPanel } from "@/gallery/preview-panel"
-import { installCommand, itemMarkdownPath, registryLive, requirements } from "@/gallery/site"
-import { itemDetails } from "@/gallery/sources"
+import { itemMarkdownPath, itemPath, registryLive } from "@/gallery/site"
+import { itemDetails, type ItemDetails } from "@/gallery/sources"
+import type { StackId } from "@/gallery/stacks"
 
 // One gallery page: the catalog menu and the item it shows. The page carries the same content as
 // the item's Markdown version (gallery/markdown.ts); parts only people use are marked
@@ -20,22 +21,23 @@ const mono = "font-mono text-[11px] tracking-[0.08em] uppercase"
 const sectionTitle = "text-xl font-semibold tracking-[-0.01em]"
 const prose = "max-w-3xl text-[15px] leading-relaxed text-(--site-fg-secondary)"
 
-export async function ItemPage({ name }: { name: string }) {
-  const details = await itemDetails(name)
-  if (!details) notFound()
-  const { group, item } = details
+export async function ItemPage({ name, stack: stackId }: { name: string; stack?: StackId }) {
+  const details = await itemDetails(name, stackId)
+  if (!details || (stackId && !details.available)) notFound()
+  const { group, item, stack } = details
   const built = item.phase === "built"
+  const markdownPath = itemMarkdownPath(item.name, stack.id)
 
   return (
     <div className="min-h-svh bg-(--site-canvas) text-(--site-fg) font-sans">
       {/* For agents, near the top of every page and outside the navigation. */}
       <p className="sr-only">
-        A Markdown version of this page is at <a href={itemMarkdownPath(item.name)}>{itemMarkdownPath(item.name)}</a>, and the index of
+        A Markdown version of this page is at <a href={markdownPath}>{markdownPath}</a>, and the index of
         every Tileflow Blocks item is at <a href="/llms.txt">/llms.txt</a>.
       </p>
       <GalleryHeader />
       <div className="mx-auto flex max-w-[1440px] flex-wrap items-start gap-x-10 px-4 md:px-6">
-        <CatalogMenu current={item.name} />
+        <CatalogMenu current={item.name} stack={stack.id} />
         <main className="flex min-w-0 flex-[999_1_560px] flex-col gap-10 pt-8 pb-20 md:pt-10">
           <div className="flex max-w-3xl flex-col gap-3.5">
             <div data-markdown-ignore className={cn(mono, "flex items-center gap-2.5 text-xs text-(--site-fg-muted)")}>
@@ -44,7 +46,10 @@ export async function ItemPage({ name }: { name: string }) {
               <span>{group.kind}</span>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-4xl leading-tight font-semibold tracking-[-0.03em] md:text-[40px]">{item.title}</h1>
+              <h1 className="text-4xl leading-tight font-semibold tracking-[-0.03em] md:text-[40px]">
+                {item.title}
+                {!stack.default && <span className="sr-only"> for {stack.label}</span>}
+              </h1>
               <span
                 data-markdown-ignore
                 className={cn(
@@ -82,15 +87,34 @@ export async function ItemPage({ name }: { name: string }) {
               <h2 id="install" className={sectionTitle}>
                 Install
               </h2>
+              <StackPicker details={details} />
+              <p className={prose}>
+                Stack: {stack.label}. {stack.summary}{" "}
+                {stacksSentence(details, (other, candidate) => (
+                  <Link key={candidate.id} href={`${itemPath(other, candidate.id)}#install`} className="underline underline-offset-3">
+                    {candidate.label}
+                  </Link>
+                ))}
+              </p>
               {!registryLive && <p className="text-[13px] text-(--site-fg-muted)">{preRelease}</p>}
               <p className={prose}>Run this command in the root of your project:</p>
-              <div className="flex max-w-3xl items-center gap-3 rounded-[14px] border border-(--site-rule) bg-(--site-surface) py-2 pr-2 pl-4.5">
-                <code className="min-w-0 flex-1 overflow-x-auto font-mono text-[13px] whitespace-nowrap">{installCommand(item.name)}</code>
-                <CopyButton text={installCommand(item.name)} label="Copy install command" className="size-9 border border-(--site-rule-strong) bg-(--site-canvas) hover:bg-(--site-raised)" />
-              </div>
+              <Command text={installCommand(stack, item.name)} label="Copy install command" />
               <p className={prose}>{inlineCode(addsSentence(details.files, details.dependencies))}</p>
-              <p className={prose}>Requirements: {requirements}</p>
-              {details.docs && <p className={prose}>{details.docs}</p>}
+              {stack.setup && stack.setup.length > 0 && (
+                <>
+                  <p className={prose}>{setupSentence}</p>
+                  {stack.setup.map((step) => (
+                    <div key={step.title} className="flex flex-col gap-3 pt-1">
+                      <h3 className="text-base font-semibold">{step.title}</h3>
+                      <p className={prose}>{step.text}</p>
+                      {step.command && <Command text={step.command} label={`Copy the ${step.title} setup command`} />}
+                      {step.code && <CodeBlock label={step.code.label} code={step.code.content} maxHeight={false} />}
+                    </div>
+                  ))}
+                </>
+              )}
+              {stack.requirements && <p className={prose}>Requirements: {stack.requirements}</p>}
+              {details.docs && <p className={prose}>{inlineCode(details.docs)}</p>}
             </section>
           )}
 
@@ -99,7 +123,7 @@ export async function ItemPage({ name }: { name: string }) {
               <h2 id="usage" className={sectionTitle}>
                 Usage
               </h2>
-              <p className={prose}>This example is the one the gallery preview draws.</p>
+              <p className={prose}>{usageSentence(stack)}</p>
               <CodeBlock label="Example" code={details.example.content} />
             </section>
           )}
@@ -128,7 +152,7 @@ export async function ItemPage({ name }: { name: string }) {
                   <li key={use.name}>
                     {use.inCatalog ? (
                       <Link
-                        href={`/items/${use.name}`}
+                        href={itemPath(use.name, built ? stack.id : undefined)}
                         className="inline-flex rounded-full border border-(--site-rule) px-3 py-1.5 font-mono text-xs text-(--site-fg-secondary) hover:border-(--site-rule-strong)"
                       >
                         {use.name}
@@ -151,6 +175,48 @@ export async function ItemPage({ name }: { name: string }) {
 
 export function itemTitle(name: string) {
   return findCatalogItem(name)?.item.title ?? "Item"
+}
+
+function Command({ text, label }: { text: string; label: string }) {
+  return (
+    <div className="flex max-w-3xl items-center gap-3 rounded-[14px] border border-(--site-rule) bg-(--site-surface) py-2 pr-2 pl-4.5">
+      <code className="min-w-0 flex-1 overflow-x-auto font-mono text-[13px] whitespace-nowrap">{text}</code>
+      <CopyButton text={text} label={label} className="size-9 border border-(--site-rule-strong) bg-(--site-canvas) hover:bg-(--site-raised)" />
+    </div>
+  )
+}
+
+/** The stacks of the item: links for the ones it exists in, the rest marked Soon. Same preview in all. */
+function StackPicker({ details }: { details: ItemDetails }) {
+  return (
+    <nav aria-label="Stack" data-markdown-ignore className="flex flex-wrap gap-1.5">
+      {details.stacks.map(({ stack, available }) => {
+        const current = stack.id === details.stack.id
+        const pill = "inline-flex min-h-9 items-center gap-2 rounded-full border px-3.5 text-sm"
+        return available ? (
+          <Link
+            key={stack.id}
+            href={`${itemPath(details.item.name, stack.id)}#install`}
+            scroll={false}
+            aria-current={current ? "page" : undefined}
+            className={cn(
+              pill,
+              current
+                ? "border-(--site-fg) bg-(--site-raised) font-semibold text-(--site-fg)"
+                : "border-(--site-rule) text-(--site-fg-secondary) hover:border-(--site-rule-strong)"
+            )}
+          >
+            {stack.label}
+          </Link>
+        ) : (
+          <span key={stack.id} aria-disabled="true" className={cn(pill, "border-dashed border-(--site-rule) text-(--site-fg-muted)")}>
+            {stack.label}
+            <span className="font-mono text-[10px] tracking-[0.06em] uppercase">Soon</span>
+          </span>
+        )
+      })}
+    </nav>
+  )
 }
 
 /** Renders `code` spans of a Markdown sentence. */
@@ -191,7 +257,7 @@ function GalleryHeader() {
   )
 }
 
-function CatalogMenu({ current }: { current: string }) {
+function CatalogMenu({ current, stack }: { current: string; stack: StackId }) {
   const groups = (
     <div className="flex flex-col gap-7">
       {catalog.map((group) => (
@@ -200,7 +266,7 @@ function CatalogMenu({ current }: { current: string }) {
           <ul className="flex flex-col gap-0.5">
             {group.items.map((item) => (
               <li key={item.name}>
-                <MenuLink item={item} active={item.name === current} />
+                <MenuLink item={item} active={item.name === current} stack={stack} />
               </li>
             ))}
           </ul>
@@ -227,10 +293,11 @@ function CatalogMenu({ current }: { current: string }) {
   )
 }
 
-function MenuLink({ item, active }: { item: CatalogItem; active: boolean }) {
+function MenuLink({ item, active, stack }: { item: CatalogItem; active: boolean; stack: StackId }) {
   return (
     <Link
-      href={`/items/${item.name}`}
+      // Built items keep the chosen stack; the others have one page.
+      href={itemPath(item.name, item.phase === "built" ? stack : undefined)}
       aria-current={active ? "page" : undefined}
       className={cn(
         "flex min-h-9 items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-sm transition-colors hover:bg-(--site-raised)",

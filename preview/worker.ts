@@ -1,11 +1,14 @@
 // Serves the static gallery from `pnpm preview:build`, adding the Markdown versions for agents:
-// /items/<name>.md, and any page asked for with `Accept: text/markdown`. next.config.ts does the
+// /items/<name>.md, /items/<name>/<stack>.md, and any page asked for with `Accept: text/markdown`. next.config.ts does the
 // same in development.
 
 type Env = { ASSETS: Fetcher }
 
-const page = /^\/items\/([a-z0-9-]+)\/?$/
-const markdownFile = /^\/items\/([a-z0-9-]+)\.md$/
+// /items/<name> is the default stack, /items/<name>/<stack> the others.
+const page = /^\/items\/([a-z0-9-]+)(?:\/([a-z]+))?\/?$/
+const markdownFile = /^\/items\/([a-z0-9-]+)(?:\/([a-z]+))?\.md$/
+
+const itemAsset = ([, name, stack]: RegExpMatchArray) => (stack ? `/md/stacks/${stack}/${name}.md` : `/md/items/${name}.md`)
 
 /** True when the request ranks Markdown at least as high as HTML. */
 function prefersMarkdown(accept: string | null) {
@@ -22,18 +25,18 @@ function prefersMarkdown(accept: string | null) {
 
 function markdownAsset(pathname: string, accept: string | null): string | null {
   const file = pathname.match(markdownFile)
-  if (file) return `/md/items/${file[1]}.md`
+  if (file) return itemAsset(file)
   if (pathname === "/index.md") return pathname
   if (!prefersMarkdown(accept)) return null
   if (pathname === "/") return "/index.md"
   const item = pathname.match(page)
-  return item ? `/md/items/${item[1]}.md` : null
+  return item ? itemAsset(item) : null
 }
 
 const markdownAlternate = (pathname: string) => {
   if (pathname === "/") return "/index.md"
   const item = pathname.match(page)
-  return item ? `/items/${item[1]}.md` : null
+  return item ? `${item[0].replace(/\/$/, "")}.md` : null
 }
 
 const worker = {
