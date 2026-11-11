@@ -11,7 +11,12 @@ import type { TileflowAnnotation } from "@tileflow/interactions"
 import "maplibre-gl/dist/maplibre-gl.css"
 
 import { cn } from "@/lib/utils"
-import { mapTheme, useColorScheme, type MapVariant } from "@/lib/map-theme"
+import {
+  mapTheme,
+  useColorScheme,
+  useMapThemeSettings,
+  type MapVariant,
+} from "@/lib/map-theme"
 
 // The bundler copies the worker of the installed maplibre-gl next to your app.
 if (typeof window !== "undefined") {
@@ -77,7 +82,7 @@ type MapProps<TAnnotation extends TileflowAnnotation = TileflowAnnotation> =
     map?: string
     /** How much the base map competes with your content. */
     variant?: MapVariant
-    /** A Streets theme name. Overrides the theme that follows your app. */
+    /** A Streets theme name. Overrides the theme that follows your app and MapThemeProvider. */
     theme?: string
     /** Controls, legends and panels drawn over the map. They can call useMap(). */
     children?: React.ReactNode
@@ -97,6 +102,7 @@ function Map<TAnnotation extends TileflowAnnotation = TileflowAnnotation>({
   ...props
 }: MapProps<TAnnotation>) {
   const scheme = useColorScheme()
+  const settings = useMapThemeSettings()
   const [instance, setInstance] = React.useState<MapLibreMap | null>(null)
 
   return (
@@ -107,7 +113,7 @@ function Map<TAnnotation extends TileflowAnnotation = TileflowAnnotation>({
       <TileflowMap
         {...(props as InteractiveProps<TAnnotation>)}
         source={{ map, manifestUrl: "/api/tileflow/manifest.json" }}
-        theme={theme ?? mapTheme(scheme, variant)}
+        theme={theme ?? mapTheme(scheme, variant, settings)}
         themeTransition={{ duration: 300 }}
         height="100%"
         className="h-full w-full"

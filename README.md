@@ -45,7 +45,7 @@ Install a single component with `npx shadcn@latest add https://tileflow.dev/r/ma
 
 ```sh
 pnpm install
-pnpm dev                    # previews every item at http://localhost:3000
+pnpm dev                    # the gallery: every catalog item at http://localhost:3000
 pnpm registry:build         # writes dist/r/<item>.json and dist/r/v/<version>/<item>.json
 pnpm registry:dev           # serves dist/ like tileflow.dev/r/* does
 pnpm check                  # lint, types, registry validation, registry and preview builds

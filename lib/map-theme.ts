@@ -1,6 +1,6 @@
 "use client"
 
-import { useSyncExternalStore } from "react"
+import { createContext, useContext, useSyncExternalStore } from "react"
 
 export type ColorScheme = "light" | "dark"
 
@@ -49,10 +49,38 @@ export function useColorScheme(): ColorScheme {
 }
 
 /**
- * The Streets theme for a colour scheme and variant. Streets publishes
- * `light`, `dark`, `faded`, `dark-faded`, `monochrome` and `dark-monochrome`.
+ * How every map below a MapThemeProvider looks, for apps with more than one design theme.
+ * - `light`: the light-mode base, `light` or the warmer `dawn`.
+ * - `dark`: the dark-mode base, `dark` or the warmer `dusk`.
+ * - `variant`: replaces the variant each map asks for.
  */
-export function mapTheme(scheme: ColorScheme, variant: MapVariant): string {
-  if (variant === "default") return scheme
-  return scheme === "dark" ? `dark-${variant}` : variant
+export type MapThemeSettings = {
+  light?: "light" | "dawn"
+  dark?: "dark" | "dusk"
+  variant?: MapVariant
+}
+
+const MapThemeContext = createContext<MapThemeSettings>({})
+
+/** Sets the map theme for every <Map> inside it: `<MapThemeProvider value={{ light: "dawn" }}>`. */
+export const MapThemeProvider = MapThemeContext.Provider
+
+/** The settings of the nearest MapThemeProvider, or none. */
+export function useMapThemeSettings(): MapThemeSettings {
+  return useContext(MapThemeContext)
+}
+
+/**
+ * The Streets theme for a colour scheme and variant. Streets publishes `light`, `dark`, `dawn`
+ * and `dusk`, each plain, `-faded` and `-monochrome` (the light ones are `faded` and `monochrome`).
+ */
+export function mapTheme(
+  scheme: ColorScheme,
+  variant: MapVariant,
+  settings: MapThemeSettings = {}
+): string {
+  const base = scheme === "dark" ? (settings.dark ?? "dark") : (settings.light ?? "light")
+  const resolved = settings.variant ?? variant
+  if (resolved === "default") return base
+  return base === "light" ? resolved : `${base}-${resolved}`
 }
