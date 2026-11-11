@@ -4,7 +4,7 @@
 export const siteOrigin = (process.env.TILEFLOW_BLOCKS_ORIGIN ?? "https://blocks-preview.tileflow.dev").replace(/\/$/, "")
 
 /** Where `npx shadcn add` fetches the items from. */
-export const registryOrigin = "https://tileflow.dev/r"
+export const registryOrigin = "https://tileflow.dev/r/react"
 
 /** False until the registry is served at registryOrigin. */
 export const registryLive = false

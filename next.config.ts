@@ -1,9 +1,10 @@
 import type { NextConfig } from "next"
 import { withTileflow } from "@tileflow/next"
 
-// `pnpm dev` and installed apps serve the map from the route in app/api/tileflow.
-// `pnpm preview:build` exports the gallery as a static site instead: the map is prepared at build
-// time into the same /api/tileflow paths, and the route (the only .ts file under app/) is left out.
+// The gallery prepares its map like any Next.js app that installs `map`: withTileflow serves it at
+// /tileflow through app/api/tileflow in development and writes it to public/tileflow in builds.
+// `pnpm preview:build` exports the gallery as a static site; the route (the only .ts file under
+// app/) is left out because the export already holds the prepared map.
 const staticPreview = process.env.TILEFLOW_STATIC_PREVIEW === "1"
 
 // Markdown for agents: /items/<name>.md, or an item page asked for with `Accept: text/markdown`.
@@ -11,15 +12,8 @@ const staticPreview = process.env.TILEFLOW_STATIC_PREVIEW === "1"
 const wantsMarkdown = [{ type: "header" as const, key: "accept", value: ".*text/markdown.*" }]
 
 const nextConfig: NextConfig = staticPreview
-  ? withTileflow(
-      {
-        output: "export",
-        pageExtensions: ["tsx"],
-        images: { unoptimized: true },
-      },
-      { base: "/api/tileflow" }
-    )
-  : {
+  ? withTileflow({ output: "export", pageExtensions: ["tsx"], images: { unoptimized: true } })
+  : withTileflow({
       async rewrites() {
         return {
           beforeFiles: [
@@ -31,6 +25,6 @@ const nextConfig: NextConfig = staticPreview
           fallback: [],
         }
       },
-    }
+    })
 
 export default nextConfig

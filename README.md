@@ -1,34 +1,55 @@
 # Tileflow Blocks
 
-Map components and blocks for React and Next.js that you copy into your project and edit. They
-follow your shadcn/ui theme: the map switches between light and dark with your theme toggle, and
-markers, clusters, popups and controls use your `--primary`, `--popover`, `--border` and
-`--radius`. Street map data comes from Tileflow World; no account or API key is needed.
+Map components and blocks that you copy into your project and edit. They follow your shadcn/ui
+theme: the map switches between light and dark with your theme toggle, and markers, clusters,
+popups and controls use your `--primary`, `--popover`, `--border` and `--radius`. Street map data
+comes from Tileflow World; no account or API key is needed.
 
-The components are a thin layer over the published `@tileflow/react`, `@tileflow/core` and
-`@tileflow/interactions` packages. Rendering, clustering, popups, accessibility and map data stay
-in those packages; the files here hold layout, styling and the parts you are expected to change.
+The components are a thin layer over the published `@tileflow/*` packages. Rendering, clustering,
+popups, accessibility and map data stay in those packages; the files here hold layout, styling and
+the parts you are expected to change.
 
-## Install
+## Install in React
 
 > **Pre-release.** The registry is not served at `tileflow.dev/r` yet, so the commands below do not
 > work until it is.
 
-In a Next.js App Router project with shadcn/ui:
+In a React project with shadcn/ui (Next.js, Vite, React Router):
 
 ```sh
-npx shadcn@latest add https://tileflow.dev/r/store-locator.json
+npx shadcn@latest add https://tileflow.dev/r/react/store-locator.json
 ```
 
-This adds the store locator page at `/store-locator`, the map components it uses, the map
-definition in `tileflow.config.ts`, and the route that serves the map at `/api/tileflow`. Replace
-the sample stores in `components/store-locator/stores.ts` with your own data.
+This adds the store locator, the map components it uses and the map definition in
+`tileflow.config.ts`. Replace the sample stores in `components/store-locator/stores.ts` with your
+own data, and render `<StoreLocator stores={stores} categories={storeCategories} />` in a page.
 
-Install a single component with `npx shadcn@latest add https://tileflow.dev/r/map.json`.
+Then let your framework prepare the map, so it is served at `/tileflow/manifest.json`:
+
+- **Next.js:** add the route with `npx shadcn@latest add https://tileflow.dev/r/react/map-next.json`
+  and wrap your config in `next.config.ts`:
+
+  ```ts
+  import { withTileflow } from "@tileflow/next"
+
+  export default withTileflow(nextConfig)
+  ```
+
+- **Vite** (React Router, TanStack Start): install `@tileflow/vite` and add its plugin to
+  `vite.config.ts`:
+
+  ```ts
+  import { tileflow } from "@tileflow/vite"
+
+  export default defineConfig({ plugins: [tileflow(), react()] })
+  ```
+
+Install a single component with `npx shadcn@latest add https://tileflow.dev/r/react/map.json`.
 
 | Item            | Type      | What it adds                                                          |
 | --------------- | --------- | --------------------------------------------------------------------- |
-| `map`           | component | `<Map>`, the theme bridge, `tileflow.config.ts` and the map route     |
+| `map`           | component | `<Map>`, the theme bridge and `tileflow.config.ts`                    |
+| `map-next`      | setup     | The route that serves the map while `next dev` runs                   |
 | `map-marker`    | component | `MapPin` and `MapPriceTag` for `renderMarker`                         |
 | `map-popup`     | component | Popup header, title, description and footer for `renderPopup`         |
 | `map-controls`  | component | Show-my-location and full-screen buttons                              |
@@ -36,9 +57,8 @@ Install a single component with `npx shadcn@latest add https://tileflow.dev/r/ma
 
 ## Requirements
 
-- Next.js 15 or 16 with the App Router, React 18 or 19, Tailwind CSS 4 and shadcn/ui.
-- The map loads its manifest from `/api/tileflow` and MapLibre's worker from your bundle.
-  `next.config.ts` does not need changes.
+- React 18 or 19, Tailwind CSS 4 and shadcn/ui, with Next.js 15 or 16 (App Router) or Vite 5 to 8.
+- MapLibre's worker comes from your bundle; nothing to copy.
 - Keep the map attribution visible.
 
 ## Develop
@@ -49,14 +69,15 @@ pnpm dev                    # the gallery: every catalog item at http://localhos
 pnpm registry:build         # writes dist/r/<item>.json and dist/r/v/<version>/<item>.json
 pnpm registry:dev           # serves dist/ like tileflow.dev/r/* does
 pnpm check                  # lint, types, registry validation, registry and preview builds
-pnpm test:install           # installs store-locator into a new shadcn app and opens it in Chromium
+pnpm test:install           # installs store-locator into new Next.js and Vite apps and opens each in Chromium
 ```
 
 `pnpm test:install` needs Chromium for Playwright (`pnpm exec playwright install chromium`).
 
 The files under `components/`, `lib/` and `app/` are the registry sources: `registry.json` points
 at them, and the preview app renders them exactly as they are installed. Set `REGISTRY_URL` when
-building for another origin, for example `REGISTRY_URL=http://localhost:8787/r`.
+building for another origin, for example `REGISTRY_URL=http://localhost:8787/r`. Each stack is
+served under its own path: `/r/react/<item>.json`.
 
 ## For agents
 

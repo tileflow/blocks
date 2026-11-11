@@ -80,6 +80,11 @@ type MapProps<TAnnotation extends TileflowAnnotation = TileflowAnnotation> =
   Omit<InteractiveProps<TAnnotation>, "source" | "theme" | "height" | "mode"> & {
     /** A map from tileflow.config.ts. Defaults to "app". */
     map?: string
+    /**
+     * Where the prepared map is served. The Next.js, Vite and Webpack integrations and
+     * `tileflow build` all serve it at the default, /tileflow/manifest.json.
+     */
+    manifestUrl?: string
     /** How much the base map competes with your content. */
     variant?: MapVariant
     /** A Streets theme name. Overrides the theme that follows your app and MapThemeProvider. */
@@ -94,6 +99,7 @@ type MapProps<TAnnotation extends TileflowAnnotation = TileflowAnnotation> =
  */
 function Map<TAnnotation extends TileflowAnnotation = TileflowAnnotation>({
   map = "app",
+  manifestUrl = "/tileflow/manifest.json",
   variant = "default",
   theme,
   className,
@@ -112,7 +118,7 @@ function Map<TAnnotation extends TileflowAnnotation = TileflowAnnotation>({
     >
       <TileflowMap
         {...(props as InteractiveProps<TAnnotation>)}
-        source={{ map, manifestUrl: "/api/tileflow/manifest.json" }}
+        source={{ map, manifestUrl }}
         theme={theme ?? mapTheme(scheme, variant, settings)}
         themeTransition={{ duration: 300 }}
         height="100%"

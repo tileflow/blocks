@@ -46,3 +46,5 @@ next-env.d.ts
 
 # map artifacts written by the static preview build
 /public/api/
+# The prepared map that withTileflow writes on build.
+/public/tileflow/

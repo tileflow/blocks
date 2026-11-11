@@ -1,7 +1,7 @@
 // Registry items are public JSON. Any origin may read them; nothing else is served.
 const ITEM =
-  /^\/r\/(?:v\/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?\/)?[a-z0-9-]+\.json$/
-const PINNED = /^\/r\/v\//
+  /^\/r\/(?:react|svelte)\/(?:v\/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?\/)?[a-z0-9-]+\.json$/
+const PINNED = /^\/r\/[a-z]+\/v\//
 
 const cors = {
   "access-control-allow-origin": "*",
