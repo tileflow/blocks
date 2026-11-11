@@ -20,7 +20,9 @@
     "preview:build": "TILEFLOW_STATIC_PREVIEW=1 next build",
     "preview:serve": "wrangler dev --config preview/wrangler.jsonc --local --port 8790",
     "preview:deploy": "wrangler deploy --config preview/wrangler.jsonc",
-    "typecheck:svelte": "pnpm --dir svelte check"
+    "typecheck:svelte": "pnpm --dir svelte check",
+    "sdk:pack": "node scripts/sdk-pack.mjs",
+    "check:elements": "pnpm --dir elements typecheck && pnpm --dir elements build"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

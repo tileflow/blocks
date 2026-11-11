@@ -1,6 +1,6 @@
 import { catalog } from "@/gallery/catalog"
 import { itemPath, siteOrigin } from "@/gallery/site"
-import { liveStacks } from "@/gallery/stacks"
+import { stackItemPages } from "@/gallery/stacks"
 
 export const dynamic = "force-static"
 
@@ -8,9 +8,8 @@ export const dynamic = "force-static"
 export function GET() {
   const urls = catalog
     .flatMap((group) => group.items)
-    .flatMap((item) =>
-      item.phase === "built" ? liveStacks.map((stack) => itemPath(item.name, stack.id)) : [itemPath(item.name)]
-    )
+    .map((item) => itemPath(item.name))
+    .concat(stackItemPages(catalog.flatMap((group) => group.items)).map(({ name, stack }) => itemPath(name, stack)))
     .map((path) => `  <url><loc>${siteOrigin}${path}</loc></url>`)
     .join("\n")
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`, {

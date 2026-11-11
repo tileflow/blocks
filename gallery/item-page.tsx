@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { catalog, findCatalogItem, type CatalogItem } from "@/gallery/catalog"
 import { CodeBlock } from "@/gallery/code-block"
 import { CopyButton, FileTabs, SchemeToggle } from "@/gallery/controls"
-import { addsSentence, installCommand, preRelease, setupSentence, stacksSentence, statusSentence, usageSentence } from "@/gallery/markdown"
+import { addsSentence, installCommand, preReleaseFor, setupSentence, sourceSentence, stacksSentence, statusSentence, usageSentence } from "@/gallery/markdown"
 import { PreviewPanel } from "@/gallery/preview-panel"
 import { itemMarkdownPath, itemPath, registryLive } from "@/gallery/site"
 import { itemDetails, type ItemDetails } from "@/gallery/sources"
@@ -96,10 +96,10 @@ export async function ItemPage({ name, stack: stackId }: { name: string; stack?:
                   </Link>
                 ))}
               </p>
-              {!registryLive && <p className="text-[13px] text-(--site-fg-muted)">{preRelease}</p>}
+              {!registryLive && <p className="text-[13px] text-(--site-fg-muted)">{preReleaseFor(stack)}</p>}
               <p className={prose}>Run this command in the root of your project:</p>
               <Command text={installCommand(stack, item.name)} label="Copy install command" />
-              <p className={prose}>{inlineCode(addsSentence(details.files, details.dependencies))}</p>
+              <p className={prose}>{inlineCode(addsSentence(details.files, details.dependencies, stack))}</p>
               {stack.setup && stack.setup.length > 0 && (
                 <>
                   <p className={prose}>{setupSentence}</p>
@@ -133,7 +133,7 @@ export async function ItemPage({ name, stack: stackId }: { name: string; stack?:
               <h2 id="source" className={sectionTitle}>
                 Source
               </h2>
-              <p className={prose}>The files the command adds, as they are installed.</p>
+              <p className={prose}>{sourceSentence(stack)}</p>
               <FileTabs paths={details.files.map((file) => file.path)}>
                 {details.files.map((file) => (
                   <CodeBlock key={file.path} label={file.path} code={file.content} />

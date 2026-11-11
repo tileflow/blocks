@@ -28,15 +28,22 @@ export type ItemDetails = {
   stacks: { stack: Stack; available: boolean }[]
 }
 
-type RegistryItem = { name: string; files: { path: string }[]; dependencies?: string[]; docs?: string }
+type RegistryItem = { name: string; files: { path: string; source?: string }[]; dependencies?: string[]; docs?: string }
 
 const read = (file: string) => readFile(path.join(/*turbopackIgnore: true*/ process.cwd(), file), "utf8")
 
-const languages: Record<string, string> = { ".tsx": "tsx", ".ts": "ts", ".svelte": "svelte", ".json": "json", ".css": "css" }
+const languages: Record<string, string> = { ".tsx": "tsx", ".ts": "ts", ".js": "js", ".svelte": "svelte", ".html": "html", ".json": "json", ".css": "css" }
 const languageOf = (file: string) => languages[path.extname(file)] ?? ""
 
 const registries = new Map<string, Promise<RegistryItem[]>>()
-function registryItems(stack: Stack) {
+function registryItems(stack: Stack): Promise<RegistryItem[]> {
+  // A package stack lists its items in gallery/stacks.ts; each installs the package.
+  if (stack.package) {
+    const { name: dependency, items } = stack.package
+    return Promise.resolve(
+      Object.entries(items).map(([name, item]) => ({ name, docs: item.docs, files: item.files ?? [], dependencies: [dependency] }))
+    )
+  }
   if (!stack.registry) return Promise.resolve([])
   let items = registries.get(stack.registry)
   if (!items) {
@@ -52,14 +59,14 @@ export async function itemDetails(name: string, stackId?: StackId): Promise<Item
   if (!found || !stack) return null
   const { group, item } = found
   const built = item.phase === "built"
-  const available = stackHasItem(stack, built)
+  const available = stackHasItem(stack, built, name)
   const entry = available ? (await registryItems(stack)).find((candidate) => candidate.name === name) : undefined
   const files = entry
     ? await Promise.all(
         // Registry paths are relative to the folder of the stack's registry.json.
         entry.files.map(async (file) => ({
           path: file.path,
-          content: await read(path.join(path.dirname(stack.registry ?? ""), file.path)),
+          content: await read(file.source ?? path.join(path.dirname(stack.registry ?? ""), file.path)),
           language: languageOf(file.path),
         }))
       )
@@ -78,11 +85,12 @@ export async function itemDetails(name: string, stackId?: StackId): Promise<Item
     dependencies: entry?.dependencies ?? [],
     files,
     example,
-    uses: item.uses.map((use) => {
+    // A package stack has no shadcn components or npm items of its own to list.
+    uses: item.uses.filter((use) => !stack.package || findCatalogItem(use)).map((use) => {
       const other = findCatalogItem(use)?.item
       return { name: use, title: other?.title, description: other?.description, inCatalog: Boolean(other) }
     }),
-    stacks: stacks.map((candidate) => ({ stack: candidate, available: stackHasItem(candidate, built) })),
+    stacks: stacks.map((candidate) => ({ stack: candidate, available: stackHasItem(candidate, built, name) })),
   }
 }
 

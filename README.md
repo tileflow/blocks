@@ -78,6 +78,13 @@ shadcn-svelte's `$lib` imports need `alias: { $lib: "src/lib" }` in the `sveltek
 The Svelte items are `map`, `map-marker`, `map-popup`, `map-controls` and `store-locator`, as in
 React. Their sources live in `svelte/`, a SvelteKit app that renders them.
 
+## Use in any web page
+
+`@tileflow/elements` has the map, markers, popups and controls as custom elements for plain HTML, a
+CMS or any framework, and the store locator as a page to copy. It lives in [`elements/`](elements)
+with its own [README](elements/README.md). It is not on npm yet: it builds on the SDK's
+framework-free map core, which is not released.
+
 ## Requirements
 
 - React: React 18 or 19, Tailwind CSS 4 and shadcn/ui, with Next.js 15 or 16 (App Router) or Vite 5

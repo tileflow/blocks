@@ -4,7 +4,7 @@ import { notFound } from "next/navigation"
 import { catalog } from "@/gallery/catalog"
 import { ItemPage, itemTitle } from "@/gallery/item-page"
 import { itemMarkdownPath, siteOrigin } from "@/gallery/site"
-import { findStack, liveStacks } from "@/gallery/stacks"
+import { findStack, stackItemPages } from "@/gallery/stacks"
 
 // A built item in a stack other than the default one: /items/<name>/<stack>. Same preview, that
 // stack's install, setup, example and source.
@@ -14,11 +14,7 @@ type Params = { params: Promise<{ name: string; stack: string }> }
 export const dynamicParams = false
 
 export function generateStaticParams() {
-  return liveStacks
-    .filter((stack) => !stack.default)
-    .flatMap((stack) =>
-      catalog.flatMap((group) => group.items.filter((item) => item.phase === "built").map((item) => ({ name: item.name, stack: stack.id })))
-    )
+  return stackItemPages(catalog.flatMap((group) => group.items))
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {

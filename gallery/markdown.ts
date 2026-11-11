@@ -1,7 +1,7 @@
 import { catalog, defaultItemName } from "@/gallery/catalog"
 import { itemDetails, type ItemDetails, type SourceFile } from "@/gallery/sources"
 import { itemMarkdownPath, registryItemUrl, registryLive, siteOrigin } from "@/gallery/site"
-import { liveStacks, soonStacks, type Stack, type StackId } from "@/gallery/stacks"
+import { liveStacks, soonStacks, stackHasItem, type Stack, type StackId } from "@/gallery/stacks"
 
 // The Markdown versions of the gallery, for agents: one page per item and stack, /llms.txt and
 // /llms-full.txt. Each page carries the same content as its HTML page. Gallery only.
@@ -10,6 +10,18 @@ const indexDirective = `> For the index of every Tileflow Blocks item, see [llms
 
 export const preRelease =
   "Pre-release: the registry is not served at tileflow.dev/r yet, so the install command works once it is."
+
+/** The pre-release note of a stack: its registry, or its npm package, is not published yet. */
+export const preReleaseFor = (stack: Stack) =>
+  stack.package ? `Pre-release: ${stack.package.name} is not on npm yet, so the install command works once it is.` : preRelease
+
+const preReleaseAll =
+  "Pre-release: neither the registries at tileflow.dev/r nor @tileflow/elements are published yet, so the install commands work once they are."
+
+/** "A", "A and B", "A, B and C". */
+export function listOf<T>(items: T[]): (string | T)[] {
+  return items.flatMap((item, index) => (index === 0 ? [item] : [index === items.length - 1 ? " and " : ", ", item]))
+}
 
 function fence(code: string, language: string) {
   const longest = Math.max(0, ...[...code.matchAll(/`+/g)].map((match) => match[0].length))
@@ -29,11 +41,18 @@ export function statusSentence(phase: "soon" | "later") {
     : "Planned for a later release. It is not built yet, so there is nothing to install."
 }
 
-export function addsSentence(files: SourceFile[], dependencies: string[]) {
+export function addsSentence(files: SourceFile[], dependencies: string[], stack?: Stack) {
+  if (stack?.package) {
+    const copy = files.length ? ` Copy ${files.map((file) => `\`${file.path}\``).join(" and ")} from the source below into your project.` : ""
+    return `The command installs \`${stack.package.name}\` and the map packages it uses; importing it once defines every element.${copy}`
+  }
   const list = files.map((file) => `\`${file.path}\``).join(", ")
   const packages = dependencies.length ? ` and installs ${dependencies.map((name) => `\`${name}\``).join(", ")}` : ""
   return `The command adds ${list}${packages}. It also adds the items this one is built from, if your project does not have them.`
 }
+
+export const sourceSentence = (stack: Stack) =>
+  stack.package ? "The files to copy into your project." : "The files the command adds, as they are installed."
 
 export const setupSentence = "Set up the map once per project, for your framework:"
 
@@ -45,11 +64,9 @@ export function stacksSentence<Link>(details: ItemDetails, link: (name: string, 
   const others = details.stacks.filter((entry) => entry.available && entry.stack.id !== details.stack.id).map((entry) => entry.stack)
   const parts: (string | Link)[] = []
   if (others.length) {
-    parts.push("Also for ")
-    others.forEach((stack, index) => parts.push(...(index ? [", "] : []), link(details.item.name, stack)))
-    parts.push(". ")
+    parts.push("Also for ", ...listOf(others.map((stack) => link(details.item.name, stack))), ". ")
   }
-  parts.push(`Coming soon for ${soonStacks.map((stack) => stack.label).join(" and ")}.`)
+  parts.push(`Coming soon for ${listOf(soonStacks.map((stack) => stack.label)).join("")}.`)
   return parts
 }
 
@@ -68,9 +85,9 @@ export async function itemMarkdown(name: string, stackId?: StackId): Promise<str
   } else {
     lines.push(`Stack: ${stack.label}. ${stack.summary} ${stacksSentence(details, (other, candidate) => `[${candidate.label}](${absolute(other, candidate.id)})`).join("")}`, "")
     lines.push("## Install", "")
-    if (!registryLive) lines.push(`> ${preRelease}`, "")
+    if (!registryLive) lines.push(`> ${preReleaseFor(stack)}`, "")
     lines.push("Run this command in the root of your project:", "", fence(installCommand(stack, item.name), "bash"), "")
-    lines.push(addsSentence(details.files, details.dependencies), "")
+    lines.push(addsSentence(details.files, details.dependencies, stack), "")
     if (stack.setup?.length) {
       lines.push(setupSentence, "")
       for (const step of stack.setup) {
@@ -82,8 +99,10 @@ export async function itemMarkdown(name: string, stackId?: StackId): Promise<str
     if (stack.requirements) lines.push(`Requirements: ${stack.requirements}`, "")
     if (details.docs) lines.push(details.docs, "")
     if (details.example) lines.push("## Usage", "", usageSentence(stack), "", codeFence(details.example), "")
-    lines.push("## Source", "", "The files the command adds, as they are installed.", "")
-    for (const file of details.files) lines.push(`### \`${file.path}\``, "", codeFence(file), "")
+    if (details.files.length) {
+      lines.push("## Source", "", sourceSentence(stack), "")
+      for (const file of details.files) lines.push(`### \`${file.path}\``, "", codeFence(file), "")
+    }
   }
 
   if (details.uses.length) {
@@ -106,17 +125,17 @@ export function llmsIndex(): string {
   const lines = [
     "# Tileflow Blocks",
     "",
-    `> Map components and blocks that you install into your app with the shadcn CLI of your framework. The files land in your project and the map follows your theme. Available for ${liveStacks.map((stack) => stack.label).join(" and ")}; coming soon for ${soonStacks.map((stack) => stack.label).join(" and ")}.`,
+    `> Map components and blocks for your app: copied into your project with the shadcn CLI of your framework, or as custom elements for any web page. The map follows your theme. Available for ${listOf(liveStacks.map((stack) => stack.label)).join("")}; coming soon for ${listOf(soonStacks.map((stack) => stack.label)).join("")}.`,
     "",
     "Pick the section for your project's framework and install an item by running its command in the root of your project. Each page has the command, the one-time map setup, a usage example and the full source of every file it adds.",
     "",
-    registryLive ? "" : `${preRelease}`,
+    registryLive ? "" : preReleaseAll,
     "",
   ]
   for (const stack of liveStacks) {
     lines.push(`## ${stack.label}`, "", `${stack.summary} Requirements: ${stack.requirements}`, "")
     for (const group of catalog) {
-      for (const item of group.items.filter((candidate) => candidate.phase === "built")) {
+      for (const item of group.items.filter((candidate) => stackHasItem(stack, candidate.phase === "built", candidate.name))) {
         lines.push(`- [${item.title}](${absolute(item.name, stack.id)}): ${group.kind}. ${item.description}`)
       }
     }
@@ -134,10 +153,14 @@ export function llmsIndex(): string {
 }
 
 export async function llmsFull(): Promise<string> {
-  const header = ["# Tileflow Blocks: every built item", "", indexDirective, "", registryLive ? "" : preRelease, ""].join("\n")
+  const header = ["# Tileflow Blocks: every built item", "", indexDirective, "", registryLive ? "" : preReleaseAll, ""].join("\n")
   const sections: string[] = []
   for (const stack of liveStacks) {
-    const pages = await Promise.all(builtItems().map((item) => itemMarkdown(item.name, stack.id)))
+    const pages = await Promise.all(
+      builtItems()
+        .filter((item) => stackHasItem(stack, true, item.name))
+        .map((item) => itemMarkdown(item.name, stack.id))
+    )
     // Each page starts with an H1; nest them under the stack's H2, below this file's own H1.
     const body = pages
       .filter((page): page is string => page !== null)

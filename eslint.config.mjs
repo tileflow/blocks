@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     "**/.wrangler/**",
     // The Svelte registry has its own checks (pnpm typecheck:svelte).
     "svelte/**",
+    // @tileflow/elements has its own workspace and checks (pnpm --dir elements typecheck).
+    "elements/**",
   ]),
 ]);
 

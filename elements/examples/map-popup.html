@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Popup</title>
+    <script type="module">
+      import "@tileflow/elements"
+    </script>
+  </head>
+  <body>
+    <div style="height: 24rem">
+      <tileflow-map center="-3.7035,40.4186" zoom="15.5">
+        <!-- open: the popup starts open. The map keeps the attribute current as people open and close it. -->
+        <tileflow-marker id="shop" lng="-3.7035" lat="40.4172" label="Puerta del Sol store" open active>
+          <tileflow-pin>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9M4 9v11h16V9M4 9h16M9 20v-6h6v6" /></svg>
+          </tileflow-pin>
+          <tileflow-popup>
+            <div class="tileflow-popup">
+              <div class="tileflow-popup-header">
+                <h3 class="tileflow-popup-title">Puerta del Sol</h3>
+                <p class="tileflow-popup-description">Calle de Preciados 12, Madrid</p>
+              </div>
+              <p style="margin: 0; font-size: 0.75rem">Flagship · Open 9:00–21:00</p>
+              <div class="tileflow-popup-footer">
+                <a href="https://www.openstreetmap.org/directions?to=40.4172%2C-3.7035">Directions</a>
+                <button type="button" data-popup-close>Close</button>
+              </div>
+            </div>
+          </tileflow-popup>
+        </tileflow-marker>
+      </tileflow-map>
+    </div>
+  </body>
+</html>

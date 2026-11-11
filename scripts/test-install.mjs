@@ -1,14 +1,19 @@
 // Installs the registry into new apps and checks that the store locator works in each.
 //
 //   node scripts/test-install.mjs            every environment
-//   node scripts/test-install.mjs vite       one: next, vite, sveltekit
+//   node scripts/test-install.mjs vite       one: next, vite, sveltekit, html
 //
 // Builds the registry for a local origin and serves it with the Worker (`wrangler dev`). For each
 // environment it creates an app with its shadcn CLI, adds `store-locator` from that origin, follows
 // the setup the map item describes, builds and starts the app, and opens the store locator in
 // Chromium: the map must reach its idle state with the sample stores on it, and switch to a dark
 // map theme when the app switches to dark mode.
+//
+// `html` installs the packed @tileflow/elements into a plain Vite site and serves its store locator
+// example. It needs the SDK packs in .sdk-packs (`pnpm sdk:pack`) until @tileflow/dom is on npm,
+// and is skipped without them.
 import { spawn } from "node:child_process"
+import { existsSync } from "node:fs"
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
 import net from "node:net"
 import os from "node:os"
@@ -189,6 +194,48 @@ const environments = {
     start: (port) => ["pnpm", ["exec", "vite", "preview", "--port", String(port), "--strictPort"]],
     page: "/",
   },
+  html: {
+    // A plain Vite site: the package is installed from npm, so here from its pack.
+    requires: sdkPacks,
+    async create(workspace, name) {
+      const app = path.join(workspace, name)
+      await mkdir(app, { recursive: true })
+      await writeFile(path.join(app, "package.json"), JSON.stringify({ name, private: true, type: "module" }, null, 2))
+      // The local packs keep the SDK's development ranges; use them for every @tileflow package.
+      await writeFile(
+        path.join(app, "pnpm-workspace.yaml"),
+        `packages: []\noverrides:\n${["core", "interactions", "dom"].map((pkg) => `  "@tileflow/${pkg}": file:${sdkPack(pkg)}`).join("\n")}\n`
+      )
+      return app
+    },
+    async add(app) {
+      await run("pnpm", ["--dir", "elements", "build"])
+      await run("pnpm", ["--dir", "elements", "pack", "--pack-destination", app])
+      await run("pnpm", ["add", "./tileflow-elements-0.1.0-alpha.0.tgz", sdkPack("dom"), sdkPack("core"), "@tileflow/maps@0.1.0-alpha.20", "maplibre-gl@6.16.0"], { cwd: app })
+      for (const file of ["store-locator.html", "stores.js"]) {
+        await writeFile(path.join(app, file === "store-locator.html" ? "index.html" : file), await readFile(path.join("elements/examples", file)))
+      }
+    },
+    async setup(app) {
+      await run("pnpm", ["add", "-D", "vite@8.3.0", "@tileflow/vite@0.1.0-alpha.26"], { cwd: app })
+      await writeFile(path.join(app, "tileflow.config.ts"), await readFile("elements/tileflow.config.ts"))
+      await writeFile(
+        path.join(app, "vite.config.ts"),
+        'import { tileflow } from "@tileflow/vite"\nimport { defineConfig } from "vite"\n\nexport default defineConfig({ plugins: [tileflow()] })\n'
+      )
+    },
+    build: ["pnpm", ["exec", "vite", "build"]],
+    start: (port) => ["pnpm", ["exec", "vite", "preview", "--port", String(port), "--strictPort"]],
+    page: "/",
+  },
+}
+
+function sdkPack(name) {
+  return path.resolve(".sdk-packs", `tileflow-${name}-0.0.0-development.tgz`)
+}
+
+function sdkPacks() {
+  return ["core", "interactions", "dom"].every((name) => existsSync(sdkPack(name)))
 }
 
 async function shadcnInit(workspace, name, template) {
@@ -263,6 +310,10 @@ try {
   serve("pnpm", ["exec", "wrangler", "dev", "--config", "worker/wrangler.jsonc", "--local", "--port", String(registryPort), "--inspector-port", String(inspectorPort)])
   await waitFor(`${registryUrl}/react/store-locator.json`)
   for (const name of selected.length ? selected : Object.keys(environments)) {
+    if (environments[name].requires && !environments[name].requires()) {
+      console.log(`${name}: skipped, the SDK packs are not in .sdk-packs (pnpm sdk:pack)`)
+      continue
+    }
     await check(name, environments[name], workspace)
   }
 } finally {

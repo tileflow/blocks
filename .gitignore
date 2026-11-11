@@ -48,3 +48,9 @@ next-env.d.ts
 /public/api/
 # The prepared map that withTileflow writes on build.
 /public/tileflow/
+
+# @tileflow/elements: SDK packs until @tileflow/dom is on npm, and build output.
+/.sdk-packs/
+/elements/node_modules/
+/elements/dist/
+/elements/dist-demo/
